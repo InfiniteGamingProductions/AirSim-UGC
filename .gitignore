@@ -72,3 +72,17 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Exclude the mods folder
+Mods/*
+
+# Exclude AirLib folder
+Plugins/AirSim/Source/AirLib/*
+
+# Releases
+Releases/*
+
+!Build/Scripts/*
+!Build/Scripts/Properties/*
+
+desktop.ini

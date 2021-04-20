@@ -1,0 +1,31 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "",
+	"Category": "AI Research",
+	"Description": "a simulator for drones, cars and more",
+	"Modules": [
+		{
+			"Name": "AirsimUGC",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"AirSim",
+				"SimpleUGC"
+			]
+		}
+	],
+	"TargetPlatforms": [
+		"MacNoEditor",
+		"WindowsNoEditor"
+	],
+	"Plugins": [
+		{
+			"Name": "AirSim",
+			"Enabled": true
+		},
+		{
+			"Name": "SimpleUGC",
+			"Enabled": true
+		}
+	]
+}
