@@ -82,6 +82,7 @@ Plugins/AirSim/Source/AirLib/*
 # Releases
 Releases/*
 
+# Include the build scripts 
 !Build/Scripts/*
 !Build/Scripts/Properties/*
 
