@@ -1,7 +1,7 @@
 # AirSim User Generated Content
-A Unreal Engine drone and car simulator for machine learning. This project is based on [microsoft/AirSim](https://github.com/Microsoft/AirSim/) an Unreal Engine plugin that allows for custom vehicles, maps, and more. It is an extension of the[EpicGames/UGCExample](https://github.com/EpicGames/UGCExample/) to allow for moding support.
+A Unreal Engine drone and car simulator for machine learning. This project is based on [microsoft/AirSim](https://github.com/Microsoft/AirSim/) an Unreal Engine plugin that allows for custom vehicles, maps, and more. It is an extension of the [EpicGames/UGCExample](https://github.com/EpicGames/UGCExample/) to allow for moding support.
 
-## How to install
+## Get It
 
 ### Windows
 [Download Latest](https://github.com/InfiniteGamingProductions/AirSim-UGC/releases)
@@ -11,16 +11,15 @@ A Unreal Engine drone and car simulator for machine learning. This project is ba
 
 ## How to Use It
 
-See the [detailed documentation](https://microsoft.github.io/AirSim/) on all aspects of AirSim.
+To setup your development environment follow the steps [here](https://github.com/InfiniteGamingProductions/AirSim-UGC/wiki/Setup-Your-Development-Environment)
 
-## FAQ
+Also See the [detailed documentation](https://microsoft.github.io/AirSim/) on all aspects of the AirSim plugin.
 
-If you run into problems, check the [FAQ](https://microsoft.github.io/AirSim/faq) and feel free to post issues in the  [AirSim](https://github.com/Microsoft/AirSim/issues) repository.
+Also check out the [EpicGames UGC Quickstart Guide](https://github.com/EpicGames/UGCExample/blob/release/Documentation/QuickStart.md)
 
 ## Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
 
 ## License
 
