@@ -11,12 +11,13 @@
 #include "PawnEvents.h"
 #include "PIPCamera.h"
 #include "ManualPoseController.h"
+#include "Vehicles/VehicleBasePawn.h"
 
 #include "ComputerVisionPawn.generated.h"
 
 
 UCLASS()
-class AComputerVisionPawn : public APawn
+class AComputerVisionPawn : public AVehicleBasePawn
 {
     GENERATED_BODY()
 

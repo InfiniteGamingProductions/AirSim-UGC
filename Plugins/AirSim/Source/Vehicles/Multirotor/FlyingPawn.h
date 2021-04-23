@@ -5,11 +5,12 @@
 #include "PIPCamera.h"
 #include "common/common_utils/UniqueValueMap.hpp"
 #include "MultirotorPawnEvents.h"
+#include "Vehicles/VehicleBasePawn.h"
 
 #include "FlyingPawn.generated.h"
 
 UCLASS()
-class AIRSIM_API AFlyingPawn : public APawn
+class AIRSIM_API AFlyingPawn : public AVehicleBasePawn
 {
     GENERATED_BODY()
 
