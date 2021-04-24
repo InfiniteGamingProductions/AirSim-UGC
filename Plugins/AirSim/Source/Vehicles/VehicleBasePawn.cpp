@@ -14,13 +14,19 @@ AVehicleBasePawn::AVehicleBasePawn()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
 }
 
 // Called when the game starts or when spawned
 void AVehicleBasePawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+// Called when the game ends or is destroyed
+void AVehicleBasePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -39,11 +45,22 @@ void AVehicleBasePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void AVehicleBasePawn::OnPauseButtonClicked()
 {
+	if (UGameplayStatics::IsGamePaused(this))
+	{
+		UnpauseGame();
+	}
+	else {
+		PauseGame();
+	}
+}
+
+void AVehicleBasePawn::PauseGame()
+{
 	if (!IsValid(PauseMenuReference))
 	{
 		PauseMenuReference = CreateWidget<UUserWidget>(GetWorld(), PauseMenuClass);
 	}
-	
+
 	APlayerController* ctrl = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	ctrl->bShowMouseCursor = true;
 	ctrl->SetInputMode(FInputModeUIOnly());
@@ -51,5 +68,19 @@ void AVehicleBasePawn::OnPauseButtonClicked()
 	PauseMenuReference->AddToViewport();
 
 	UGameplayStatics::SetGamePaused(this, true);
+}
+
+void AVehicleBasePawn::UnpauseGame()
+{
+	if (IsValid(PauseMenuReference))
+	{
+		APlayerController* ctrl = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		ctrl->bShowMouseCursor = false;
+		ctrl->SetInputMode(FInputModeGameOnly());
+
+		PauseMenuReference->RemoveFromViewport();
+
+		UGameplayStatics::SetGamePaused(this, false);
+	}
 }
 
