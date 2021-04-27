@@ -18,7 +18,7 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
     using namespace std::chrono_literals;
 
     // Add loading screen to viewport
-    simmode_->toggleLoadingScreen(true);
+    //simmode_->toggleLoadingScreen(true);
     std::this_thread::sleep_for(0.1s);
     UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
         
@@ -38,7 +38,7 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
     UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
         this->simmode_->OnLevelLoaded.Broadcast();
     }, true);
-    this->simmode_->toggleLoadingScreen(false);
+    //this->simmode_->toggleLoadingScreen(false);
 
     return success;
 }

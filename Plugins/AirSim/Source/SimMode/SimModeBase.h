@@ -14,7 +14,6 @@
 #include "api/ApiProvider.hpp"
 #include "PawnSimApi.h"
 #include "common/StateReporterWrapper.hpp"
-#include "LoadingScreenWidget.h"
 #include "SimModeBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLevelLoaded);
@@ -40,9 +39,6 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Airsim | get stuff")
     static ASimModeBase* getSimMode();
-
-    UFUNCTION(BlueprintCallable, Category = "Airsim | get stuff")
-    void toggleLoadingScreen(bool is_visible);
 
     UFUNCTION(BlueprintCallable, Category = "Airsim | get stuff")
     virtual void reset();
@@ -148,7 +144,6 @@ private:
     UPROPERTY() UClass* external_camera_class_;
     UPROPERTY() UClass* camera_director_class_;
     UPROPERTY() UClass* sky_sphere_class_;
-    UPROPERTY() ULoadingScreenWidget* loading_screen_widget_;
 
 
     UPROPERTY() AActor* sky_sphere_;
