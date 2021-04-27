@@ -105,14 +105,14 @@ void ASimModeBase::BeginPlay()
         fpv_pawn = pawns[0];
     }
     else {
-        APlayerController* player_controller = this->GetWorld()->GetFirstPlayerController();
+        APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
         fpv_pawn = player_controller->GetViewTarget();
     }
     player_start_transform = fpv_pawn->GetActorTransform();
     player_loc = player_start_transform.GetLocation();
     // Move the world origin to the player's location (this moves the coordinate system and adds
     // a corresponding offset to all positions to compensate for the shift)
-    this->GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + this->GetWorld()->OriginLocation);
+    GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + GetWorld()->OriginLocation);
     // Regrab the player's position after the offset has been added (which should be 0,0,0 now)
     player_start_transform = fpv_pawn->GetActorTransform();
     global_ned_transform_.reset(new NedTransform(player_start_transform, 
@@ -151,8 +151,8 @@ void ASimModeBase::BeginPlay()
     if (World)
     {
         UWeatherLib::initWeather(World, spawned_actors_);
-        //UWeatherLib::showWeatherMenu(World);
     }
+	
     UAirBlueprintLib::GenerateActorMap(this, scene_object_map);
 
     loading_screen_widget_->AddToViewport();

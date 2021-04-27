@@ -45,26 +45,11 @@ class AIRSIM_API UWeatherLib : public UBlueprintFunctionLibrary
 	{
 		return TEXT("/AirSim/Weather/WeatherFX/WeatherGlobalParams");
 	}
-	static const FSoftClassPath getWeatherMenuObjectPath()
-	{
-		return FSoftClassPath(TEXT("AActor'/AirSim/Weather/UI/MenuActor.MenuActor_C'"));
-	}
 
 	static const FSoftClassPath getWeatherActorPath()
 	{
 		return FSoftClassPath(TEXT("AActor'/AirSim/Weather/WeatherFX/WeatherActor.WeatherActor_C'"));
 	}
-	
-	static const FSoftClassPath getWeatherMenuWidgetClass()
-	{
-		return FSoftClassPath(TEXT("UUserWidget'/AirSim/HUDAssets/OptionsMenu.OptionsMenu_C'"));
-	}
-	// menu class name for finding and closing it
-	static const FString getWeatherMenuClassName()
-	{
-		return TEXT("OptionsMenu_C");
-	}
-
 
 	// corresponding param name to set in Weather Params material collection
 	static const FName GetWeatherParamScalarName(EWeatherParamScalar WeatherParam)
@@ -162,17 +147,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Weather)
 	static void setWeatherEnabled(UWorld* World, bool bEnabled);
 
-	UFUNCTION(BlueprintCallable, Category = Weather)
-	static void showWeatherMenu(UWorld* World);
-
-	UFUNCTION(BlueprintCallable, Category = Weather)
-	static void hideWeatherMenu(UWorld* World);
-
-	UFUNCTION(BlueprintCallable, Category = Weather)
-	static bool isMenuVisible(UWorld* World);
-
-	UFUNCTION(BlueprintCallable, Category = Weather)
-	static void toggleWeatherMenu(UWorld* World);
+	//TODO: Remove widgetGetWorld and actorGetWorld. You arent supposed to need to get the world from blueprints
 
 	// blueprint callable function for widget to get world
 	// since GetWorld() isn't exposed to bp
