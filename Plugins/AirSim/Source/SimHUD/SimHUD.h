@@ -59,7 +59,6 @@ private:
     void createSimMode();
     void initializeSettings();
     void setUnrealEngineSettings();
-    void loadLevel();
     void createMainWidget();
     const std::vector<AirSimSettings::SubwindowSetting>& getSubWindowSettings() const;
     std::vector<AirSimSettings::SubwindowSetting>& getSubWindowSettings();

@@ -13,26 +13,7 @@
 AVehicleBasePawn::AVehicleBasePawn()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-	
-}
-
-// Called when the game starts or when spawned
-void AVehicleBasePawn::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-// Called when the game ends or is destroyed
-void AVehicleBasePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-}
-
-// Called every frame
-void AVehicleBasePawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 // Called to bind functionality to input

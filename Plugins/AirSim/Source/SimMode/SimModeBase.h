@@ -16,17 +16,12 @@
 #include "common/StateReporterWrapper.hpp"
 #include "SimModeBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLevelLoaded);
-
 UCLASS()
 class AIRSIM_API ASimModeBase : public AActor
 {
 public:
 
     GENERATED_BODY()
-
-    UPROPERTY(BlueprintAssignable, BlueprintCallable)
-    FLevelLoaded OnLevelLoaded;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Refs")
     ACameraDirector* CameraDirector;

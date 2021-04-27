@@ -23,7 +23,6 @@ void ASimHUD::BeginPlay()
 
     try {
         UAirBlueprintLib::OnBeginPlay();
-        loadLevel();
 
         initializeSettings();
         setUnrealEngineSettings();
@@ -56,6 +55,7 @@ void ASimHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
         widget_->Destruct();
         widget_ = nullptr;
     }
+
     if (simmode_) {
         simmode_->Destroy();
         simmode_ = nullptr;
@@ -284,13 +284,6 @@ std::string ASimHUD::getSimModeFromUser()
         return AirSimSettings::kSimModeTypeCar;
 }
 
-void ASimHUD::loadLevel()
-{
-    if (AirSimSettings::singleton().level_name != "")
-        UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), FString(AirSimSettings::singleton().level_name.c_str()));}, true);
-    else
-        UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), FString("Blocks"));}, true);
-}
 void ASimHUD::createSimMode()
 {
     std::string simmode_name = AirSimSettings::singleton().simmode_name;

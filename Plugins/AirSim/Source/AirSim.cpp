@@ -23,4 +23,5 @@ void FAirSim::StartupModule()
 void FAirSim::ShutdownModule()
 {
     //plugin shutdown
+	UE_LOG(LogTemp, Log, TEXT("ShutdownModule: AirSim plugin"));
 }

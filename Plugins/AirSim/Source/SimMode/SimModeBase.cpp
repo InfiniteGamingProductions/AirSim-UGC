@@ -29,7 +29,6 @@
 //it to AirLib and directly implement WorldSimApiBase interface
 #include "WorldSimApi.h"
 
-//#include "UGCBlueprintLibrary.h"
 #include "UGCBaseGameInstance.h"
 #include "UGCRegistry.h"
 

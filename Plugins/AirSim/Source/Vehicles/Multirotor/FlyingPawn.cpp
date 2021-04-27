@@ -6,6 +6,8 @@
 
 AFlyingPawn::AFlyingPawn()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
     bodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body Mesh"));
 	RootComponent = bodyMesh;
     

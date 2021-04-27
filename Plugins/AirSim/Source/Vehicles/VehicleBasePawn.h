@@ -18,16 +18,7 @@ public:
 	// Sets default values for this pawn's properties
 	AVehicleBasePawn();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Called when the game ends or is killed
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

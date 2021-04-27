@@ -80,6 +80,7 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
 
 ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const FString& level_name)
 {
+	//Why not just use = ?
     bool success{ false };
     context->GetWorld()->SetNewWorldOrigin(FIntVector(0,0,0));
     ULevelStreamingDynamic* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
