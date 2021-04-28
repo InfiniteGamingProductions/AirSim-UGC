@@ -22,13 +22,16 @@ void ASimHUD::BeginPlay()
     Super::BeginPlay();
 
     try {
-        UAirBlueprintLib::OnBeginPlay();
-
         initializeSettings();
+
         setUnrealEngineSettings();
+
         createSimMode();
+
         createMainWidget();
+
         setupInputBindings();
+
         if (simmode_)
             simmode_->startApiServer();
     }
@@ -232,17 +235,18 @@ void ASimHUD::setUnrealEngineSettings()
 
 void ASimHUD::setupInputBindings()
 {
-    UAirBlueprintLib::EnableInput(this);
-
-    UAirBlueprintLib::BindActionToKey("inputEventToggleRecording", EKeys::R, this, &ASimHUD::inputEventToggleRecording);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleReport", EKeys::Semicolon, this, &ASimHUD::inputEventToggleReport);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleHelp", EKeys::F1, this, &ASimHUD::inputEventToggleHelp);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleTrace", EKeys::T, this, &ASimHUD::inputEventToggleTrace);
-
-    UAirBlueprintLib::BindActionToKey("InputEventToggleSubwindow0", EKeys::One, this, &ASimHUD::inputEventToggleSubwindow0);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleSubwindow1", EKeys::Two, this, &ASimHUD::inputEventToggleSubwindow1);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleSubwindow2", EKeys::Three, this, &ASimHUD::inputEventToggleSubwindow2);
-    UAirBlueprintLib::BindActionToKey("InputEventToggleAll", EKeys::Zero, this, &ASimHUD::inputEventToggleAll);
+	APlayerController* controller = GetOwningPlayerController();
+	if (controller)
+	{
+		controller->InputComponent->BindAction("ToggleRecording", IE_Pressed, this, &ASimHUD::inputEventToggleRecording);
+		controller->InputComponent->BindAction("ToggleReport", IE_Pressed, this, &ASimHUD::inputEventToggleReport);
+		controller->InputComponent->BindAction("ToggleHelp", IE_Pressed, this, &ASimHUD::inputEventToggleHelp);
+		controller->InputComponent->BindAction("ToggleTrace", IE_Pressed, this, &ASimHUD::inputEventToggleTrace);
+		controller->InputComponent->BindAction("ToggleSubwindow0", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow0);
+		controller->InputComponent->BindAction("ToggleSubwindow1", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow1);
+		controller->InputComponent->BindAction("ToggleSubwindow2", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow2);
+		controller->InputComponent->BindAction("ToggleAllSubwindows", IE_Pressed, this, &ASimHUD::inputEventToggleAll);
+	}
 }
 
 void ASimHUD::initializeSettings()

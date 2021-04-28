@@ -172,14 +172,26 @@ void ACameraDirector::setupInputBindings()
 {
     UAirBlueprintLib::EnableInput(this);
 
-    UAirBlueprintLib::BindActionToKey("inputEventFpvView", EKeys::F, this, &ACameraDirector::inputEventFpvView);
+	APlayerController* controller = GetWorld()->GetFirstPlayerController();
+	if (controller)
+	{
+		controller->InputComponent->BindAction("FpvView", IE_Pressed, this, &ACameraDirector::inputEventFpvView);
+		controller->InputComponent->BindAction("FlyWithView", IE_Pressed, this, &ACameraDirector::inputEventFlyWithView);
+		controller->InputComponent->BindAction("GroundView", IE_Pressed, this, &ACameraDirector::inputEventGroundView);
+		controller->InputComponent->BindAction("ManualView", IE_Pressed, this, &ACameraDirector::inputEventManualView);
+		controller->InputComponent->BindAction("SpringArmChaseView", IE_Pressed, this, &ACameraDirector::inputEventSpringArmChaseView);
+		controller->InputComponent->BindAction("BackupView", IE_Pressed, this, &ACameraDirector::inputEventBackupView);
+		controller->InputComponent->BindAction("NoDisplayView", IE_Pressed, this, &ACameraDirector::inputEventNoDisplayView);
+		controller->InputComponent->BindAction("FrontView", IE_Pressed, this, &ACameraDirector::inputEventFrontView);
+	}
+    /*UAirBlueprintLib::BindActionToKey("inputEventFpvView", EKeys::F, this, &ACameraDirector::inputEventFpvView);
     UAirBlueprintLib::BindActionToKey("inputEventFlyWithView", EKeys::B, this, &ACameraDirector::inputEventFlyWithView);
     UAirBlueprintLib::BindActionToKey("inputEventGroundView", EKeys::Backslash, this, &ACameraDirector::inputEventGroundView);
     UAirBlueprintLib::BindActionToKey("inputEventManualView", EKeys::M, this, &ACameraDirector::inputEventManualView);
     UAirBlueprintLib::BindActionToKey("inputEventSpringArmChaseView", EKeys::Slash, this, &ACameraDirector::inputEventSpringArmChaseView);
     UAirBlueprintLib::BindActionToKey("inputEventBackupView", EKeys::K, this, &ACameraDirector::inputEventBackupView);
     UAirBlueprintLib::BindActionToKey("inputEventNoDisplayView", EKeys::Hyphen, this, &ACameraDirector::inputEventNoDisplayView);
-    UAirBlueprintLib::BindActionToKey("inputEventFrontView", EKeys::I, this, &ACameraDirector::inputEventFrontView);
+    UAirBlueprintLib::BindActionToKey("inputEventFrontView", EKeys::I, this, &ACameraDirector::inputEventFrontView);*/
 }
 
 void ACameraDirector::EndPlay(const EEndPlayReason::Type EndPlayReason)

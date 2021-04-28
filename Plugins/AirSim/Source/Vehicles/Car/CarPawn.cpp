@@ -340,6 +340,13 @@ void ACarPawn::setupInputBindings()
 {
     UAirBlueprintLib::EnableInput(this);
 
+	APlayerController* controller = GetWorld()->GetFirstPlayerController();
+	if (controller)
+	{
+		controller->InputComponent->BindAction("Handbrake", IE_Pressed, this, &ACarPawn::onHandbrakePressed);
+		controller->InputComponent->BindAction("Handbrake", IE_Released, this, &ACarPawn::onHandbrakeReleased);
+	}
+
     UAirBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveForward", EKeys::Up, 1), this,
         this, &ACarPawn::onMoveForward);
 
@@ -351,9 +358,6 @@ void ACarPawn::setupInputBindings()
 
     UAirBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveRight", EKeys::Left, -0.5), this,
         this, &ACarPawn::onMoveRight);
-
-    UAirBlueprintLib::BindActionToKey("Handbrake", EKeys::End, this, &ACarPawn::onHandbrakePressed, true);
-    UAirBlueprintLib::BindActionToKey("Handbrake", EKeys::End, this, &ACarPawn::onHandbrakeReleased, false);
 
     UAirBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("Footbrake", EKeys::SpaceBar, 1), this,
         this, &ACarPawn::onFootBrake);

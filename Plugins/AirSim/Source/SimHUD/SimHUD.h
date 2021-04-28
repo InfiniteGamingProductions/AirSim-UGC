@@ -49,7 +49,7 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 
 protected:
-    virtual void setupInputBindings();
+    void setupInputBindings();
     void toggleRecordHandler();
     void updateWidgetSubwindowVisibility();
     bool isWidgetSubwindowVisible(int window_index);

@@ -1,6 +1,5 @@
 #include "AirSimGameMode.h"
 #include "Misc/FileHelper.h"
-#include "IImageWrapperModule.h"
 #include "SimHUD/SimHUD.h"
 #include "common/Common.hpp"
 #include "AirBlueprintLib.h"
@@ -49,26 +48,10 @@ AAirSimGameMode::AAirSimGameMode(const FObjectInitializer& ObjectInitializer)
     HUDClass = ASimHUD::StaticClass();
 
     common_utils::Utils::getSetLogger(&GlobalASimLog);
-
-    //module loading is not allowed outside of the main thread, so we load the ImageWrapper module ahead of time.
-    static IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
 }
 
-//UGameUserSettings* AAirSimGameMode::GetGameUserSettings()
-//{
-//    if (GEngine != nullptr)
-//    {
-//        return GEngine->GameUserSettings;
-//    }
-//    return nullptr;
-//}
-
-void AAirSimGameMode::StartPlay() 
+void AAirSimGameMode::StartPlay()
 {
     Super::StartPlay();
-
-    //UGameUserSettings* game_settings = GetGameUserSettings();
-    //game_settings->SetFullscreenMode(EWindowMode::WindowedFullscreen);
-    //game_settings->ApplySettings(true);
 }
 

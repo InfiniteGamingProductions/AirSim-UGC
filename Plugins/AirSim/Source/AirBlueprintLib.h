@@ -45,7 +45,6 @@ class UAirBlueprintLib : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 
 public:
-    static void OnBeginPlay();
     static void OnEndPlay();
     static void LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec = 60);
     UFUNCTION(BlueprintCallable, Category = "Utils")
@@ -129,41 +128,27 @@ public:
 
     static std::string GetMeshName(ALandscapeProxy* mesh);
 
-    template<class UserClass>
-    static FInputActionBinding& BindActionToKey(const FName action_name, const FKey in_key, UserClass* actor,
-        typename FInputActionHandlerSignature::TUObjectMethodDelegate< UserClass >::FMethodPtr func, bool on_press_or_release = false,
-        bool shift_key = false, bool control_key = false, bool alt_key = false, bool command_key = false)
-    {
-        FInputActionKeyMapping action(action_name, in_key, shift_key, control_key, alt_key, command_key);
+	template<class UserClass>
+	static FInputAxisBinding& BindAxisToKey(const FName axis_name, const FKey in_key, AActor* actor, UserClass* obj,
+		typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
+	{
+		FInputAxisKeyMapping axis(axis_name, in_key);
 
-        APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
+		return UAirBlueprintLib::BindAxisToKey(axis, actor, obj, func);
+	}
 
-        controller->PlayerInput->AddActionMapping(action);
-        return controller->InputComponent->
-            BindAction(action_name, on_press_or_release ? IE_Pressed : IE_Released, actor, func);
-    }
+	template<class UserClass>
+	static FInputAxisBinding& BindAxisToKey(const FInputAxisKeyMapping& axis, AActor* actor, UserClass* obj,
+		typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
+	{
+		APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
 
-    template<class UserClass>
-    static FInputAxisBinding& BindAxisToKey(const FName axis_name, const FKey in_key, AActor* actor, UserClass* obj,
-        typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
-    {
-        FInputAxisKeyMapping axis(axis_name, in_key);
+		controller->PlayerInput->AddAxisMapping(axis);
+		return controller->InputComponent->
+			BindAxis(axis.AxisName, obj, func);
+	}
 
-        return UAirBlueprintLib::BindAxisToKey(axis, actor, obj, func);
-    }
-
-    template<class UserClass>
-    static FInputAxisBinding& BindAxisToKey(const FInputAxisKeyMapping& axis, AActor* actor, UserClass* obj,
-        typename FInputAxisHandlerSignature::TUObjectMethodDelegate<UserClass>::FMethodPtr func)
-    {
-        APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
-
-        controller->PlayerInput->AddAxisMapping(axis);
-        return controller->InputComponent->
-            BindAxis(axis.AxisName, obj, func);
-    }
-
-    static int RemoveAxisBinding(const FInputAxisKeyMapping& axis, FInputAxisBinding* axis_binding, AActor* actor);
+	static int RemoveAxisBinding(const FInputAxisKeyMapping& axis, FInputAxisBinding* axis_binding, AActor* actor);
 
     static void EnableInput(AActor* actor);
 

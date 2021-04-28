@@ -400,7 +400,11 @@ void ASimModeBase::setupInputBindings()
 {
     UAirBlueprintLib::EnableInput(this);
 
-    UAirBlueprintLib::BindActionToKey("InputEventResetAll", EKeys::BackSpace, this, &ASimModeBase::reset);
+	APlayerController* controller = GetWorld()->GetFirstPlayerController();
+	if (controller)
+	{
+		controller->InputComponent->BindAction("ResetAll", IE_Pressed, this, &ASimModeBase::reset);
+	}
 }
 
 ECameraDirectorMode ASimModeBase::getInitialViewMode() const

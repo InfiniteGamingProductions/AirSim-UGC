@@ -176,19 +176,18 @@ void UAirBlueprintLib::enableViewportRendering(AActor* context, bool enable)
     }
 }
 
-void UAirBlueprintLib::OnBeginPlay()
-{
-    image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
-}
-
 void UAirBlueprintLib::OnEndPlay()
 {
-    //nothing to do for now
     image_wrapper_module_ = nullptr;
 }
 
 IImageWrapperModule* UAirBlueprintLib::getImageWrapperModule()
 {
+	if (image_wrapper_module_ == nullptr)
+	{
+		image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
+	}
+
     return image_wrapper_module_;
 }
 
@@ -708,39 +707,38 @@ void UAirBlueprintLib::FollowActor(AActor* follower, const AActor* followee, con
     follower->SetActorRotation(next_rot);
 }
 
-
 int UAirBlueprintLib::RemoveAxisBinding(const FInputAxisKeyMapping& axis, FInputAxisBinding* axis_binding, AActor* actor)
 {
-    if (axis_binding != nullptr && actor != nullptr) {
-        APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
+	if (axis_binding != nullptr && actor != nullptr) {
+		APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
 
-        //remove mapping
-        int found_mapping_index = -1, cur_mapping_index = -1;
-        for (const auto& axis_arr : controller->PlayerInput->AxisMappings) {
-            ++cur_mapping_index;
-            if (axis_arr.AxisName == axis.AxisName && axis_arr.Key == axis.Key) {
-                found_mapping_index = cur_mapping_index;
-                break;
-            }
-        }
-        if (found_mapping_index >= 0)
-            controller->PlayerInput->AxisMappings.RemoveAt(found_mapping_index);
+		//remove mapping
+		int found_mapping_index = -1, cur_mapping_index = -1;
+		for (const auto& axis_arr : controller->PlayerInput->AxisMappings) {
+			++cur_mapping_index;
+			if (axis_arr.AxisName == axis.AxisName && axis_arr.Key == axis.Key) {
+				found_mapping_index = cur_mapping_index;
+				break;
+			}
+		}
+		if (found_mapping_index >= 0)
+			controller->PlayerInput->AxisMappings.RemoveAt(found_mapping_index);
 
-        //removing binding
-        int found_binding_index = -1, cur_binding_index = -1;
-        for (const auto& axis_arr : controller->InputComponent->AxisBindings) {
-            ++cur_binding_index;
-            if (axis_arr.AxisName == axis_binding->AxisName) {
-                found_binding_index = cur_binding_index;
-                break;
-            }
-        }
-        if (found_binding_index >= 0)
-            controller->InputComponent->AxisBindings.RemoveAt(found_binding_index);
+		//removing binding
+		int found_binding_index = -1, cur_binding_index = -1;
+		for (const auto& axis_arr : controller->InputComponent->AxisBindings) {
+			++cur_binding_index;
+			if (axis_arr.AxisName == axis_binding->AxisName) {
+				found_binding_index = cur_binding_index;
+				break;
+			}
+		}
+		if (found_binding_index >= 0)
+			controller->InputComponent->AxisBindings.RemoveAt(found_binding_index);
 
-        return found_binding_index;
-    }
-    else return -1;
+		return found_binding_index;
+	}
+	else return -1;
 }
 
 float UAirBlueprintLib::GetDisplayGamma()
