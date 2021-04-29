@@ -315,8 +315,6 @@ void ACarPawn::updateInCarHUD()
     }
 }
 
-
-
 void ACarPawn::updatePhysicsMaterial()
 {
     if (GetActorUpVector().Z < 0)

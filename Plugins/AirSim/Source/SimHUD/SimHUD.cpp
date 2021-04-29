@@ -13,8 +13,11 @@
 
 ASimHUD::ASimHUD()
 {
-    static ConstructorHelpers::FClassFinder<UUserWidget> hud_widget_class(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_SimHUDWidget'"));
-    widget_class_ = hud_widget_class.Succeeded() ? hud_widget_class.Class : nullptr;
+    static ConstructorHelpers::FClassFinder<UUserWidget> hudWidgetClassFinder(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_SimHUDWidget'"));
+    HUDWidgetClass = hudWidgetClassFinder.Succeeded() ? hudWidgetClassFinder.Class : nullptr;
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> pauseMenuClassFinder(TEXT("WidgetBlueprint'/AirSim/Blueprints/Widgets/WBP_PauseMenu'"));
+	PauseMenuClass = pauseMenuClassFinder.Succeeded() ? pauseMenuClassFinder.Class : nullptr;
 }
 
 void ASimHUD::BeginPlay()
@@ -22,18 +25,18 @@ void ASimHUD::BeginPlay()
     Super::BeginPlay();
 
     try {
-        initializeSettings();
+        InitializeAirSimSettings();
 
-        setUnrealEngineSettings();
+        SetUnrealEngineSettings();
 
-        createSimMode();
+        CreateSimMode();
 
-        createMainWidget();
+        CreateHUDWidget();
 
-        setupInputBindings();
+        SetupInputBindings();
 
-        if (simmode_)
-            simmode_->startApiServer();
+        if (SimMode)
+            SimMode->startApiServer();
     }
     catch (std::exception& ex) {
         UAirBlueprintLib::LogMessageString("Error at startup: ", ex.what(), LogDebugLevel::Failure);
@@ -45,23 +48,23 @@ void ASimHUD::BeginPlay()
 
 void ASimHUD::Tick(float DeltaSeconds)
 {
-    if (simmode_ && simmode_->EnableReport)
-        widget_->updateDebugReport(simmode_->getDebugReport());
+    if (SimMode && SimMode->EnableReport)
+        HUDWidget->updateDebugReport(SimMode->getDebugReport());
 }
 
 void ASimHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (simmode_)
-        simmode_->stopApiServer();
+    if (SimMode)
+        SimMode->stopApiServer();
 
-    if (widget_) {
-        widget_->Destruct();
-        widget_ = nullptr;
+    if (HUDWidget) {
+        HUDWidget->Destruct();
+        HUDWidget = nullptr;
     }
 
-    if (simmode_) {
-        simmode_->Destroy();
-        simmode_ = nullptr;
+    if (SimMode) {
+        SimMode->Destroy();
+        SimMode = nullptr;
     }
 
     UAirBlueprintLib::OnEndPlay();
@@ -69,214 +72,249 @@ void ASimHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void ASimHUD::toggleRecordHandler()
+// Begin Play Setup Functions
+
+void ASimHUD::InitializeAirSimSettings()
 {
-    simmode_->toggleRecording();
+	std::string settingsText;
+	if (GetSettingsText(settingsText))
+		AirSimSettings::initializeSettings(settingsText);
+	else
+		AirSimSettings::createDefaultSettingsFile();
+
+	AirSimSettings::singleton().load(std::bind(&ASimHUD::GetSimModeFromUser, this));
+	for (const auto& warning : AirSimSettings::singleton().warning_messages) {
+		UAirBlueprintLib::LogMessageString(warning, "", LogDebugLevel::Failure);
+	}
+	for (const auto& error : AirSimSettings::singleton().error_messages) {
+		UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, error, "settings.json");
+	}
 }
 
-void ASimHUD::inputEventToggleRecording()
+void ASimHUD::SetUnrealEngineSettings()
 {
-    toggleRecordHandler();
+	//TODO: should we only do below on SceneCapture2D components and cameras?
+	//avoid motion blur so capture images don't get
+	GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetMotionBlur(false);
+
+	//use two different methods to set console var because sometime it doesn't seem to work
+	static const auto custom_depth_var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.CustomDepth"));
+	custom_depth_var->Set(3);
+
+	//Equivalent to enabling Custom Stencil in Project > Settings > Rendering > Postprocessing
+	UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(), FString("r.CustomDepth 3"));
+
+	//during startup we init stencil IDs to random hash and it takes long time for large environments
+	//we get error that GameThread has timed out after 30 sec waiting on render thread
+	static const auto render_timeout_var = IConsoleManager::Get().FindConsoleVariable(TEXT("g.TimeoutForBlockOnRenderFence"));
+	render_timeout_var->Set(300000);
 }
 
-void ASimHUD::inputEventToggleReport()
+void ASimHUD::CreateSimMode()
 {
-    simmode_->EnableReport = !simmode_->EnableReport;
-    widget_->setReportVisible(simmode_->EnableReport);
+	std::string simmode_name = AirSimSettings::singleton().simmode_name;
+
+	FActorSpawnParameters simmode_spawn_params;
+	simmode_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	//spawn at origin. We will use this to do global NED transforms, for ex, non-vehicle objects in environment
+	if (simmode_name == AirSimSettings::kSimModeTypeMultirotor)
+		SimMode = GetWorld()->SpawnActor<ASimModeWorldMultiRotor>(FVector::ZeroVector,
+			FRotator::ZeroRotator, simmode_spawn_params);
+	else if (simmode_name == AirSimSettings::kSimModeTypeCar)
+		SimMode = GetWorld()->SpawnActor<ASimModeCar>(FVector::ZeroVector,
+			FRotator::ZeroRotator, simmode_spawn_params);
+	else if (simmode_name == AirSimSettings::kSimModeTypeComputerVision)
+		SimMode = GetWorld()->SpawnActor<ASimModeComputerVision>(FVector::ZeroVector,
+			FRotator::ZeroRotator, simmode_spawn_params);
+	else {
+		UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("SimMode is not valid: ") + simmode_name, "Error");
+		UAirBlueprintLib::LogMessageString("SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);
+	}
 }
 
-void ASimHUD::inputEventToggleHelp()
+void ASimHUD::CreateHUDWidget()
 {
-    widget_->toggleHelpVisibility();
+	//create main widget
+	if (HUDWidgetClass != nullptr) {
+		APlayerController* player_controller = this->GetWorld()->GetFirstPlayerController();
+		auto* pawn = player_controller->GetPawn();
+		if (pawn) {
+			std::string pawn_name = std::string(TCHAR_TO_ANSI(*pawn->GetName()));
+			common_utils::Utils::log(pawn_name);
+		}
+		else {
+			UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("There were no compatible vehicles created for current SimMode! Check your settings.json."), "Error");
+			UAirBlueprintLib::LogMessage(TEXT("There were no compatible vehicles created for current SimMode! Check your settings.json."), TEXT(""), LogDebugLevel::Failure);
+		}
+
+
+		HUDWidget = CreateWidget<USimHUDWidget>(player_controller, HUDWidgetClass);
+	}
+	else {
+		HUDWidget = nullptr;
+		UAirBlueprintLib::LogMessage(TEXT("Cannot instantiate BP_SimHUDWidget blueprint!"), TEXT(""), LogDebugLevel::Failure);
+	}
+
+	InitializeSubWindows();
+
+	HUDWidget->AddToViewport();
+
+	//synchronize PIP views
+	HUDWidget->initializeForPlay();
+	if (SimMode)
+		HUDWidget->setReportVisible(SimMode->EnableReport);
+	HUDWidget->setOnToggleRecordingHandler(std::bind(&ASimHUD::ToggleRecordHandler, this));
+	HUDWidget->setRecordButtonVisibility(AirSimSettings::singleton().is_record_ui_visible);
+	UpdateWidgetSubwindowVisibility();
 }
 
-void ASimHUD::inputEventToggleTrace()
+void ASimHUD::InitializeSubWindows()
 {
-    simmode_->getVehicleSimApi()->toggleTrace();
+	if (!SimMode)
+		return;
+
+	auto default_vehicle_sim_api = SimMode->getVehicleSimApi();
+
+	if (default_vehicle_sim_api) {
+		auto camera_count = default_vehicle_sim_api->getCameraCount();
+
+		//setup defaults
+		if (camera_count > 0) {
+			SubwindowCameras[0] = default_vehicle_sim_api->getCamera("");
+			SubwindowCameras[1] = default_vehicle_sim_api->getCamera(""); //camera_count > 3 ? 3 : 0
+			SubwindowCameras[2] = default_vehicle_sim_api->getCamera(""); //camera_count > 4 ? 4 : 0
+		}
+		else
+			SubwindowCameras[0] = SubwindowCameras[1] = SubwindowCameras[2] = nullptr;
+	}
+
+	for (size_t window_index = 0; window_index < AirSimSettings::kSubwindowCount; ++window_index) {
+
+		const auto& subwindow_setting = AirSimSettings::singleton().subwindow_settings.at(window_index);
+		auto vehicle_sim_api = SimMode->getVehicleSimApi(subwindow_setting.vehicle_name);
+
+		if (vehicle_sim_api) {
+			if (vehicle_sim_api->getCamera(subwindow_setting.camera_name) != nullptr)
+				SubwindowCameras[subwindow_setting.window_index] = vehicle_sim_api->getCamera(subwindow_setting.camera_name);
+			else
+				UAirBlueprintLib::LogMessageString("CameraID in <SubWindows> element in settings.json is invalid",
+					std::to_string(window_index), LogDebugLevel::Failure);
+		}
+		else
+			UAirBlueprintLib::LogMessageString("Vehicle in <SubWindows> element in settings.json is invalid",
+				std::to_string(window_index), LogDebugLevel::Failure);
+
+	}
 }
 
-ASimHUD::ImageType ASimHUD::getSubwindowCameraType(int window_index)
-{
-    //TODO: index check
-    return getSubWindowSettings().at(window_index).image_type;
-}
-
-void ASimHUD::setSubwindowCameraType(int window_index, ImageType type)
-{
-    getSubWindowSettings().at(window_index).image_type = type;
-    updateWidgetSubwindowVisibility();
-}
-
-APIPCamera* ASimHUD::getSubwindowCamera(int window_index)
-{
-    return subwindow_cameras_[window_index]; //TODO: index check
-}
-
-void ASimHUD::setSubwindowCamera(int window_index, APIPCamera* camera)
-{
-    subwindow_cameras_[window_index] = camera; //TODO: index check
-    updateWidgetSubwindowVisibility();
-}
-
-bool ASimHUD::getSubwindowVisible(int window_index)
-{
-    return getSubWindowSettings().at(window_index).visible;
-}
-
-void ASimHUD::setSubwindowVisible(int window_index, bool is_visible)
-{
-    getSubWindowSettings().at(window_index).visible = is_visible;
-    updateWidgetSubwindowVisibility();
-}
-
-void ASimHUD::updateWidgetSubwindowVisibility()
-{
-    for (int window_index = 0; window_index < AirSimSettings::kSubwindowCount; ++window_index) {
-        APIPCamera* camera = subwindow_cameras_[window_index];
-        ImageType camera_type = getSubWindowSettings().at(window_index).image_type;
-
-        bool is_visible = getSubWindowSettings().at(window_index).visible && camera != nullptr;
-
-        if (camera != nullptr)
-            camera->setCameraTypeEnabled(camera_type, is_visible);
-
-        widget_->setSubwindowVisibility(window_index,
-            is_visible,
-            is_visible ? camera->getRenderTarget(camera_type, false) : nullptr
-        );
-    }
-}
-
-bool ASimHUD::isWidgetSubwindowVisible(int window_index)
-{
-    return widget_->getSubwindowVisibility(window_index) != 0;
-}
-
-void ASimHUD::inputEventToggleSubwindow0()
-{
-    getSubWindowSettings().at(0).visible = !getSubWindowSettings().at(0).visible;
-    updateWidgetSubwindowVisibility();
-}
-
-void ASimHUD::inputEventToggleSubwindow1()
-{
-    getSubWindowSettings().at(1).visible = !getSubWindowSettings().at(1).visible;
-    updateWidgetSubwindowVisibility();
-}
-
-void ASimHUD::inputEventToggleSubwindow2()
-{
-    getSubWindowSettings().at(2).visible = !getSubWindowSettings().at(2).visible;
-    updateWidgetSubwindowVisibility();
-}
-
-void ASimHUD::inputEventToggleAll()
-{
-    getSubWindowSettings().at(0).visible = !getSubWindowSettings().at(0).visible;
-    getSubWindowSettings().at(1).visible = getSubWindowSettings().at(2).visible = getSubWindowSettings().at(0).visible;
-    updateWidgetSubwindowVisibility();
-}
-
-void ASimHUD::createMainWidget()
-{
-    //create main widget
-    if (widget_class_ != nullptr) {
-        APlayerController* player_controller = this->GetWorld()->GetFirstPlayerController();
-        auto* pawn = player_controller->GetPawn();
-        if (pawn) {
-            std::string pawn_name = std::string(TCHAR_TO_ANSI(*pawn->GetName()));
-            Utils::log(pawn_name);
-        }
-        else {
-            UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("There were no compatible vehicles created for current SimMode! Check your settings.json."), "Error");
-            UAirBlueprintLib::LogMessage(TEXT("There were no compatible vehicles created for current SimMode! Check your settings.json."), TEXT(""), LogDebugLevel::Failure);
-        }
-
-
-        widget_ = CreateWidget<USimHUDWidget>(player_controller, widget_class_);
-    }
-    else {
-        widget_ = nullptr;
-        UAirBlueprintLib::LogMessage(TEXT("Cannot instantiate BP_SimHUDWidget blueprint!"), TEXT(""), LogDebugLevel::Failure);
-    }
-
-    initializeSubWindows();
-
-    widget_->AddToViewport();
-
-    //synchronize PIP views
-    widget_->initializeForPlay();
-    if (simmode_)
-        widget_->setReportVisible(simmode_->EnableReport);
-    widget_->setOnToggleRecordingHandler(std::bind(&ASimHUD::toggleRecordHandler, this));
-    widget_->setRecordButtonVisibility(AirSimSettings::singleton().is_record_ui_visible);
-    updateWidgetSubwindowVisibility();
-}
-
-
-void ASimHUD::setUnrealEngineSettings()
-{
-    //TODO: should we only do below on SceneCapture2D components and cameras?
-    //avoid motion blur so capture images don't get
-    GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetMotionBlur(false);
-
-    //use two different methods to set console var because sometime it doesn't seem to work
-    static const auto custom_depth_var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.CustomDepth"));
-    custom_depth_var->Set(3);
-
-    //Equivalent to enabling Custom Stencil in Project > Settings > Rendering > Postprocessing
-    UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(), FString("r.CustomDepth 3"));
-
-    //during startup we init stencil IDs to random hash and it takes long time for large environments
-    //we get error that GameThread has timed out after 30 sec waiting on render thread
-    static const auto render_timeout_var = IConsoleManager::Get().FindConsoleVariable(TEXT("g.TimeoutForBlockOnRenderFence"));
-    render_timeout_var->Set(300000);
-}
-
-void ASimHUD::setupInputBindings()
+void ASimHUD::SetupInputBindings()
 {
 	APlayerController* controller = GetOwningPlayerController();
 	if (controller)
 	{
-		controller->InputComponent->BindAction("ToggleRecording", IE_Pressed, this, &ASimHUD::inputEventToggleRecording);
-		controller->InputComponent->BindAction("ToggleReport", IE_Pressed, this, &ASimHUD::inputEventToggleReport);
-		controller->InputComponent->BindAction("ToggleHelp", IE_Pressed, this, &ASimHUD::inputEventToggleHelp);
-		controller->InputComponent->BindAction("ToggleTrace", IE_Pressed, this, &ASimHUD::inputEventToggleTrace);
-		controller->InputComponent->BindAction("ToggleSubwindow0", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow0);
-		controller->InputComponent->BindAction("ToggleSubwindow1", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow1);
-		controller->InputComponent->BindAction("ToggleSubwindow2", IE_Pressed, this, &ASimHUD::inputEventToggleSubwindow2);
-		controller->InputComponent->BindAction("ToggleAllSubwindows", IE_Pressed, this, &ASimHUD::inputEventToggleAll);
+		controller->InputComponent->BindAction("ToggleRecording", IE_Pressed, this, &ASimHUD::OnToggleRecording);
+		controller->InputComponent->BindAction("ToggleReport", IE_Pressed, this, &ASimHUD::OnToggleReport);
+		controller->InputComponent->BindAction("ToggleHelp", IE_Pressed, this, &ASimHUD::OnToggleHelp);
+		controller->InputComponent->BindAction("ToggleTrace", IE_Pressed, this, &ASimHUD::OnToggleTrace);
+		controller->InputComponent->BindAction("ToggleSubwindow0", IE_Pressed, this, &ASimHUD::OnToggleSubwindow0);
+		controller->InputComponent->BindAction("ToggleSubwindow1", IE_Pressed, this, &ASimHUD::OnToggleSubwindow1);
+		controller->InputComponent->BindAction("ToggleSubwindow2", IE_Pressed, this, &ASimHUD::OnToggleSubwindow2);
+		controller->InputComponent->BindAction("ToggleAllSubwindows", IE_Pressed, this, &ASimHUD::OnToggleAllSubwindows);
+		controller->InputComponent->BindAction("Pause", IE_Pressed, this, &ASimHUD::OnPause);
 	}
 }
 
-void ASimHUD::initializeSettings()
-{
-    std::string settingsText;
-    if (getSettingsText(settingsText))
-        AirSimSettings::initializeSettings(settingsText);
-    else
-        AirSimSettings::createDefaultSettingsFile();
+// Input Bindings
 
-    AirSimSettings::singleton().load(std::bind(&ASimHUD::getSimModeFromUser, this));
-    for (const auto& warning : AirSimSettings::singleton().warning_messages) {
-        UAirBlueprintLib::LogMessageString(warning, "", LogDebugLevel::Failure);
-    }
-    for (const auto& error : AirSimSettings::singleton().error_messages) {
-        UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, error, "settings.json");
-    }
+void ASimHUD::OnToggleRecording()
+{
+	ToggleRecordHandler();
 }
 
-const std::vector<ASimHUD::AirSimSettings::SubwindowSetting>& ASimHUD::getSubWindowSettings() const
+void ASimHUD::OnToggleReport()
+{
+	SimMode->EnableReport = !SimMode->EnableReport;
+	HUDWidget->setReportVisible(SimMode->EnableReport);
+}
+
+void ASimHUD::OnToggleHelp()
+{
+	HUDWidget->toggleHelpVisibility();
+}
+
+void ASimHUD::OnToggleTrace()
+{
+	SimMode->getVehicleSimApi()->toggleTrace();
+}
+
+void ASimHUD::OnToggleSubwindow0()
+{
+	GetSubWindowSettings().at(0).visible = !GetSubWindowSettings().at(0).visible;
+	UpdateWidgetSubwindowVisibility();
+}
+
+void ASimHUD::OnToggleSubwindow1()
+{
+	GetSubWindowSettings().at(1).visible = !GetSubWindowSettings().at(1).visible;
+	UpdateWidgetSubwindowVisibility();
+}
+
+void ASimHUD::OnToggleSubwindow2()
+{
+	GetSubWindowSettings().at(2).visible = !GetSubWindowSettings().at(2).visible;
+	UpdateWidgetSubwindowVisibility();
+}
+
+void ASimHUD::OnToggleAllSubwindows()
+{
+	GetSubWindowSettings().at(0).visible = !GetSubWindowSettings().at(0).visible;
+	GetSubWindowSettings().at(1).visible = GetSubWindowSettings().at(2).visible = GetSubWindowSettings().at(0).visible;
+	UpdateWidgetSubwindowVisibility();
+}
+
+void ASimHUD::OnPause()
+{
+	if (UGameplayStatics::IsGamePaused(this))
+	{
+		UnpauseSimulation();
+	}
+	else {
+		PauseSimulation();
+	}
+}
+
+
+void ASimHUD::ToggleRecordHandler()
+{
+	SimMode->toggleRecording();
+}
+
+
+void ASimHUD::UpdateWidgetSubwindowVisibility()
+{
+	for (int window_index = 0; window_index < AirSimSettings::kSubwindowCount; ++window_index) {
+		APIPCamera* camera = SubwindowCameras[window_index];
+		msr::airlib::ImageCaptureBase::ImageType camera_type = GetSubWindowSettings().at(window_index).image_type;
+
+		bool is_visible = GetSubWindowSettings().at(window_index).visible && camera != nullptr;
+
+		if (camera != nullptr)
+			camera->setCameraTypeEnabled(camera_type, is_visible);
+
+		HUDWidget->setSubwindowVisibility(window_index,
+			is_visible,
+			is_visible ? camera->getRenderTarget(camera_type, false) : nullptr
+		);
+	}
+}
+
+std::vector<ASimHUD::AirSimSettings::SubwindowSetting>& ASimHUD::GetSubWindowSettings()
 {
     return AirSimSettings::singleton().subwindow_settings;
 }
 
-std::vector<ASimHUD::AirSimSettings::SubwindowSetting>& ASimHUD::getSubWindowSettings()
-{
-    return AirSimSettings::singleton().subwindow_settings;
-}
-
-std::string ASimHUD::getSimModeFromUser()
+std::string ASimHUD::GetSimModeFromUser()
 {
     if (EAppReturnType::No == UAirBlueprintLib::ShowMessage(EAppMsgType::YesNo,
         "Would you like to use car simulation? Choose no to use quadrotor simulation.",
@@ -288,84 +326,48 @@ std::string ASimHUD::getSimModeFromUser()
         return AirSimSettings::kSimModeTypeCar;
 }
 
-void ASimHUD::createSimMode()
+void ASimHUD::PauseSimulation()
 {
-    std::string simmode_name = AirSimSettings::singleton().simmode_name;
+	if (!IsValid(PauseMenu))
+	{
+		PauseMenu = CreateWidget<UUserWidget>(GetWorld(), PauseMenuClass);
+	}
 
-    FActorSpawnParameters simmode_spawn_params;
-    simmode_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	APlayerController* ctrl = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	ctrl->bShowMouseCursor = true;
+	ctrl->SetInputMode(FInputModeUIOnly());
 
-    //spawn at origin. We will use this to do global NED transforms, for ex, non-vehicle objects in environment
-    if (simmode_name == AirSimSettings::kSimModeTypeMultirotor)
-        simmode_ = this->GetWorld()->SpawnActor<ASimModeWorldMultiRotor>(FVector::ZeroVector, 
-            FRotator::ZeroRotator, simmode_spawn_params);
-    else if (simmode_name == AirSimSettings::kSimModeTypeCar)
-        simmode_ = this->GetWorld()->SpawnActor<ASimModeCar>(FVector::ZeroVector,
-            FRotator::ZeroRotator, simmode_spawn_params);
-    else if (simmode_name == AirSimSettings::kSimModeTypeComputerVision)
-        simmode_ = this->GetWorld()->SpawnActor<ASimModeComputerVision>(FVector::ZeroVector,
-            FRotator::ZeroRotator, simmode_spawn_params);
-    else {
-        UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("SimMode is not valid: ") + simmode_name, "Error");
-        UAirBlueprintLib::LogMessageString("SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);
-    }
+	PauseMenu->AddToViewport();
+
+	UGameplayStatics::SetGamePaused(this, true);
 }
 
-void ASimHUD::initializeSubWindows()
+void ASimHUD::UnpauseSimulation()
 {
-    if (!simmode_)
-        return;
+	if (IsValid(PauseMenu))
+	{
+		APlayerController* ctrl = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		ctrl->bShowMouseCursor = false;
+		ctrl->SetInputMode(FInputModeGameOnly());
 
-    auto default_vehicle_sim_api = simmode_->getVehicleSimApi();
+		PauseMenu->RemoveFromViewport();
 
-    if (default_vehicle_sim_api) {
-        auto camera_count = default_vehicle_sim_api->getCameraCount();
-
-        //setup defaults
-        if (camera_count > 0) {
-            subwindow_cameras_[0] = default_vehicle_sim_api->getCamera("");
-            subwindow_cameras_[1] = default_vehicle_sim_api->getCamera(""); //camera_count > 3 ? 3 : 0
-            subwindow_cameras_[2] = default_vehicle_sim_api->getCamera(""); //camera_count > 4 ? 4 : 0
-        }
-        else
-            subwindow_cameras_[0] = subwindow_cameras_[1] = subwindow_cameras_[2] = nullptr;
-    }
-
-    for (size_t window_index = 0; window_index < AirSimSettings::kSubwindowCount; ++window_index) {
-
-        const auto& subwindow_setting = AirSimSettings::singleton().subwindow_settings.at(window_index);
-        auto vehicle_sim_api = simmode_->getVehicleSimApi(subwindow_setting.vehicle_name);
-
-        if (vehicle_sim_api) {
-            if (vehicle_sim_api->getCamera(subwindow_setting.camera_name) != nullptr)
-                subwindow_cameras_[subwindow_setting.window_index] = vehicle_sim_api->getCamera(subwindow_setting.camera_name);
-            else
-                UAirBlueprintLib::LogMessageString("CameraID in <SubWindows> element in settings.json is invalid",
-                    std::to_string(window_index), LogDebugLevel::Failure);
-        }
-        else
-            UAirBlueprintLib::LogMessageString("Vehicle in <SubWindows> element in settings.json is invalid",
-                std::to_string(window_index), LogDebugLevel::Failure);
-
-    }
-
+		UGameplayStatics::SetGamePaused(this, false);
+	}
 }
-
-
 
 // Attempts to parse the settings text from one of multiple locations.
 // First, check the command line for settings provided via "-s" or "--settings" arguments
 // Next, check the executable's working directory for the settings file.
 // Finally, check the user's documents folder. 
 // If the settings file cannot be read, throw an exception
-
-bool ASimHUD::getSettingsText(std::string& settingsText) 
+bool ASimHUD::GetSettingsText(std::string& OutSettingsText) 
 {
-    return (getSettingsTextFromCommandLine(settingsText)
+    return (GetSettingsTextFromCommandLine(OutSettingsText)
         ||
-        readSettingsTextFromFile(FString(msr::airlib::Settings::getExecutableFullPath("settings.json").c_str()), settingsText)
+        ReadSettingsTextFromFile(FString(msr::airlib::Settings::getExecutableFullPath("settings.json").c_str()), OutSettingsText)
         ||
-        readSettingsTextFromFile(FString(msr::airlib::Settings::Settings::getUserDirectoryFullPath("settings.json").c_str()), settingsText));
+        ReadSettingsTextFromFile(FString(msr::airlib::Settings::Settings::getUserDirectoryFullPath("settings.json").c_str()), OutSettingsText));
 }
 
 // Attempts to parse the settings file path or the settings text from the command line
@@ -373,7 +375,7 @@ bool ASimHUD::getSettingsText(std::string& settingsText)
 // Example (Path): AirSim.exe --settings "C:\path\to\settings.json"
 // Example (Text): AirSim.exe -s '{"foo" : "bar"}' -> settingsText will be set to {"foo": "bar"}
 // Returns true if the argument is present, false otherwise.
-bool ASimHUD::getSettingsTextFromCommandLine(std::string& settingsText) 
+bool ASimHUD::GetSettingsTextFromCommandLine(std::string& OutSettingsText) 
 {
 
     bool found = false;
@@ -385,12 +387,12 @@ bool ASimHUD::getSettingsTextFromCommandLine(std::string& settingsText)
         int idx = commandLineArgsFString.Find(TEXT("-settings"));
         FString settingsJsonFString = commandLineArgsFString.RightChop(idx + 10);
 
-        if (readSettingsTextFromFile(settingsJsonFString.TrimQuotes(), settingsText)) {
+        if (ReadSettingsTextFromFile(settingsJsonFString.TrimQuotes(), OutSettingsText)) {
             return true;
         }
 
         if (FParse::QuotedString(*settingsJsonFString, settingsTextFString)) {
-            settingsText = std::string(TCHAR_TO_UTF8(*settingsTextFString));
+			OutSettingsText = std::string(TCHAR_TO_UTF8(*settingsTextFString));
             found = true;
         }
     }
@@ -398,7 +400,7 @@ bool ASimHUD::getSettingsTextFromCommandLine(std::string& settingsText)
     return found;
 }
 
-bool ASimHUD::readSettingsTextFromFile(FString settingsFilepath, std::string& settingsText) 
+bool ASimHUD::ReadSettingsTextFromFile(FString settingsFilepath, std::string& OutSettingsText)
 {
 
     bool found = FPaths::FileExists(settingsFilepath);
@@ -407,7 +409,7 @@ bool ASimHUD::readSettingsTextFromFile(FString settingsFilepath, std::string& se
         bool readSuccessful = FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
         if (readSuccessful) {
             UAirBlueprintLib::LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
-            settingsText = TCHAR_TO_UTF8(*settingsTextFStr);
+			OutSettingsText = TCHAR_TO_UTF8(*settingsTextFStr);
         }
         else {
             UAirBlueprintLib::LogMessageString("Cannot read file ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Failure);

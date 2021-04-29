@@ -22,59 +22,56 @@ class AIRSIM_API ASimHUD : public AHUD
     GENERATED_BODY()
 
 public:
-    typedef msr::airlib::ImageCaptureBase::ImageType ImageType;
-    typedef msr::airlib::AirSimSettings AirSimSettings;
+	typedef msr::airlib::AirSimSettings AirSimSettings;
 
-public:
-    void inputEventToggleRecording();
-    void inputEventToggleReport();
-    void inputEventToggleHelp();
-    void inputEventToggleTrace();
-    void inputEventToggleSubwindow0();
-    void inputEventToggleSubwindow1();
-    void inputEventToggleSubwindow2();
-    void inputEventToggleAll();
+	ASimHUD();
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaSeconds) override;
 
+	//Input Event Bindings
+    void OnToggleRecording();
+    void OnToggleReport();
+    void OnToggleHelp();
+    void OnToggleTrace();
+    void OnToggleSubwindow0();
+    void OnToggleSubwindow1();
+    void OnToggleSubwindow2();
+    void OnToggleAllSubwindows();
+	void OnPause();
 
-    ImageType getSubwindowCameraType(int window_index);
-    void setSubwindowCameraType(int window_index, ImageType type);
-    APIPCamera* getSubwindowCamera(int window_index);
-    void setSubwindowCamera(int window_index, APIPCamera* camera);
-    bool getSubwindowVisible(int window_index);
-    void setSubwindowVisible(int window_index, bool is_visible);
-    
-    ASimHUD();
-    virtual void BeginPlay() override;
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick(float DeltaSeconds) override;
+	UFUNCTION(BlueprintCallable, Category = "Pause")
+	void PauseSimulation();
 
-protected:
-    void setupInputBindings();
-    void toggleRecordHandler();
-    void updateWidgetSubwindowVisibility();
-    bool isWidgetSubwindowVisible(int window_index);
+	UFUNCTION(BlueprintCallable, Category = "Pause")
+	void UnpauseSimulation();
 
 private:
-    void initializeSubWindows();
-    void createSimMode();
-    void initializeSettings();
-    void setUnrealEngineSettings();
-    void createMainWidget();
-    const std::vector<AirSimSettings::SubwindowSetting>& getSubWindowSettings() const;
-    std::vector<AirSimSettings::SubwindowSetting>& getSubWindowSettings();
-    
+	//Begin Play Setup Functions
+	void InitializeAirSimSettings();
+	void SetUnrealEngineSettings();
+	void CreateSimMode();
+	void CreateHUDWidget();
+	void InitializeSubWindows();
+	void SetupInputBindings();
 
-    bool getSettingsText(std::string& settingsText);
-    bool getSettingsTextFromCommandLine(std::string& settingsText);
-    bool readSettingsTextFromFile(FString fileName, std::string& settingsText);
-    std::string getSimModeFromUser();
+	void ToggleRecordHandler();
 
-private:
-    typedef common_utils::Utils Utils;
-    UClass* widget_class_;
+	void UpdateWidgetSubwindowVisibility();
+    std::vector<AirSimSettings::SubwindowSetting>& GetSubWindowSettings();
 
-    UPROPERTY() USimHUDWidget* widget_;
-    UPROPERTY() ASimModeBase* simmode_;
+    std::string GetSimModeFromUser();
 
-    APIPCamera* subwindow_cameras_[AirSimSettings::kSubwindowCount];
+	bool GetSettingsText(std::string& OutSettingsText);
+	bool GetSettingsTextFromCommandLine(std::string& OutSettingsText);
+	bool ReadSettingsTextFromFile(FString fileName, std::string& OutSettingsText);
+
+    UPROPERTY() USimHUDWidget* HUDWidget;
+    UPROPERTY() ASimModeBase* SimMode;
+	UPROPERTY() UUserWidget* PauseMenu;
+
+    APIPCamera* SubwindowCameras[AirSimSettings::kSubwindowCount];
+
+	TSubclassOf<UUserWidget> HUDWidgetClass;
+	TSubclassOf<UUserWidget> PauseMenuClass;
 };
