@@ -326,11 +326,11 @@ void ASimModeBase::Tick(float DeltaSeconds)
 
     ShowClockStats();
 
-    updateDebugReport(debug_reporter_);
+    UpdateDebugReport(debug_reporter_);
 
-    drawLidarDebugPoints();
+    DrawLidarDebugPoints();
 
-    drawDistanceSensorDebugPoints();
+    DrawDistanceSensorDebugPoints();
 
     Super::Tick(DeltaSeconds);
 }
@@ -497,7 +497,7 @@ bool ASimModeBase::IsApiServerStarted()
     return ApiServer != nullptr;
 }
 
-void ASimModeBase::updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter)
+void ASimModeBase::UpdateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter)
 {
     debug_reporter.update();
     debug_reporter.setEnable(EnableReport);
@@ -624,7 +624,7 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
 
     // Usually physics registration happens at init, in ASimModeWorldBase::initializeForPlay(), but not in this case
     vehicle_sim_api->reset();
-    registerPhysicsBody(vehicle_sim_api.get());
+    RegisterPhysicsBody(vehicle_sim_api.get());
 
     // Can't be done before the vehicle apis have been created
     if ((vehicle_setting->is_fpv_vehicle || !GetApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
@@ -702,7 +702,7 @@ void ASimModeBase::SetupVehiclesAndCamera()
     CheckVehicleReady();
 }
 
-void ASimModeBase::registerPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody)
+void ASimModeBase::RegisterPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody)
 {
     // derived class shoudl override this method to add new vehicle to the physics engine
 }
@@ -762,7 +762,7 @@ msr::airlib::VehicleApiBase* ASimModeBase::GetVehicleApi(const PawnSimApi::Param
 
 // Draws debug-points on main viewport for Lidar laser hits.
 // Used for debugging only.
-void ASimModeBase::drawLidarDebugPoints()
+void ASimModeBase::DrawLidarDebugPoints()
 {
     // Currently we are checking the sensor-collection instead of sensor-settings.
     // Also using variables to optimize not checking the collection if not needed.
@@ -826,7 +826,7 @@ void ASimModeBase::drawLidarDebugPoints()
 }
 
 // Draw debug-point on main viewport for Distance sensor hit
-void ASimModeBase::drawDistanceSensorDebugPoints()
+void ASimModeBase::DrawDistanceSensorDebugPoints()
 {
     if (GetApiProvider() == nullptr)
         return;

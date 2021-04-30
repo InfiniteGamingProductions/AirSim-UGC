@@ -91,7 +91,7 @@ protected:
 	* Called To Register a new vechile with custom physics engine
 	* @note Override Required, Unless not using custom physics engine
 	*/
-	virtual void registerPhysicsBody(msr::airlib::VehicleSimApiBase* physicsBody);
+	virtual void RegisterPhysicsBody(msr::airlib::VehicleSimApiBase* physicsBody);
 
 	/**
 	* Setup a new vehicle pawn. Is called when the new vehicle is Spawned
@@ -321,7 +321,7 @@ public:
 
 protected:
 	//Optional Override
-	virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
+	virtual void UpdateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
 
 private:
 	msr::airlib::StateReporterWrapper debug_reporter_;
@@ -329,8 +329,8 @@ private:
 	bool lidar_checks_done_ = false;
 	bool lidar_draw_debug_points_ = false;
 
-	void drawLidarDebugPoints();
-	void drawDistanceSensorDebugPoints();
+	void DrawLidarDebugPoints();
+	void DrawDistanceSensorDebugPoints();
 
 	void ShowClockStats();
 #pragma endregion Debug

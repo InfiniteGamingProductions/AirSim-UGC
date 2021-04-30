@@ -6,55 +6,89 @@
 void ASimModeWorldBase::BeginPlay()
 {
     Super::BeginPlay();
+
+	std::vector<msr::airlib::UpdatableObject*> vehicles;
+	for (auto& api : GetApiProvider()->getVehicleSimApis())
+		vehicles.push_back(api);
+	//TODO: directly accept getVehicleSimApis() using generic container
+
+	std::unique_ptr<PhysicsEngineBase> physics_engine = CreatePhysicsEngine();
+	physicsEngine = physics_engine.get();
+	physicsWorld.reset(new msr::airlib::PhysicsWorld(std::move(physics_engine),
+		vehicles, GetPhysicsLoopPeriod()));
 }
 
-void ASimModeWorldBase::initializeForPlay()
+void ASimModeWorldBase::Tick(float DeltaSeconds)
 {
-    std::vector<msr::airlib::UpdatableObject*> vehicles;
-    for (auto& api : GetApiProvider()->getVehicleSimApis())
-        vehicles.push_back(api);
-    //TODO: directly accept getVehicleSimApis() using generic container
+	//keep this lock as short as possible
+	physicsWorld->lock();
 
-    std::unique_ptr<PhysicsEngineBase> physics_engine = createPhysicsEngine();
-    physics_engine_ = physics_engine.get();
-    physics_world_.reset(new msr::airlib::PhysicsWorld(std::move(physics_engine),
-        vehicles, getPhysicsLoopPeriod()));
+	physicsWorld->enableStateReport(EnableReport);
+	physicsWorld->updateStateReport();
+
+	for (auto& api : GetApiProvider()->getVehicleSimApis())
+		api->updateRenderedState(DeltaSeconds);
+
+	physicsWorld->unlock();
+
+	//perform any expensive rendering update outside of lock region
+	for (auto& api : GetApiProvider()->getVehicleSimApis())
+		api->updateRendering(DeltaSeconds);
+
+	Super::Tick(DeltaSeconds);
 }
-
-void ASimModeWorldBase::registerPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody)
-{
-    physics_world_.get()->addBody(physicsBody);
-}
-
 
 void ASimModeWorldBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	//stop physics thread before we dismantle
+	StopAsyncUpdator();
+
     //remove everything that we created in BeginPlay
-    physics_world_.reset();
+    physicsWorld.reset();
 
     Super::EndPlay(EndPlayReason);
 }
 
-void ASimModeWorldBase::startAsyncUpdator()
+void ASimModeWorldBase::Reset()
 {
-    physics_world_->startAsyncUpdator();
+	UAirBlueprintLib::RunCommandOnGameThread([this]() {
+		physicsWorld->reset();
+		}, true);
+
+	//no need to call base reset because of our custom implementation
 }
 
-void ASimModeWorldBase::stopAsyncUpdator()
+#pragma region Physics
+void ASimModeWorldBase::SetWind(const msr::airlib::Vector3r& wind) const
 {
-    physics_world_->stopAsyncUpdator();
+	physicsEngine->setWind(wind);
 }
 
-long long ASimModeWorldBase::getPhysicsLoopPeriod() const //nanoseconds
+void ASimModeWorldBase::StartAsyncUpdator()
 {
-    return physics_loop_period_;
-}
-void ASimModeWorldBase::setPhysicsLoopPeriod(long long  period)
-{
-    physics_loop_period_ = period;
+    physicsWorld->startAsyncUpdator();
 }
 
-std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::createPhysicsEngine()
+void ASimModeWorldBase::StopAsyncUpdator()
+{
+    physicsWorld->stopAsyncUpdator();
+}
+
+void ASimModeWorldBase::RegisterPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody)
+{
+	physicsWorld->addBody(physicsBody);
+}
+
+long long ASimModeWorldBase::GetPhysicsLoopPeriod() const //nanoseconds
+{
+    return physicsLoopPeriod;
+}
+void ASimModeWorldBase::SetPhysicsLoopPeriod(long long  period)
+{
+    physicsLoopPeriod = period;
+}
+
+std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::CreatePhysicsEngine()
 {
     std::unique_ptr<PhysicsEngineBase> physics_engine;
     std::string physics_engine_name = GetSettings().physics_engine_name;
@@ -78,29 +112,31 @@ std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::createP
 
     return physics_engine;
 }
+#pragma endregion Physics
 
+#pragma region Pause Functions
 bool ASimModeWorldBase::IsSimulationPaused() const
 {
-    return physics_world_->isPaused();
+    return physicsWorld->isPaused();
 }
 
 void ASimModeWorldBase::PauseSimulation(bool is_paused)
 {
-    physics_world_->pause(is_paused);
+    physicsWorld->pause(is_paused);
     UGameplayStatics::SetGamePaused(this->GetWorld(), is_paused);
 }
 
 void ASimModeWorldBase::ContinueForTime(double seconds)
 {
-    if(physics_world_->isPaused())
+    if(physicsWorld->isPaused())
     {
-        physics_world_->pause(false);
+        physicsWorld->pause(false);
         UGameplayStatics::SetGamePaused(this->GetWorld(), false);        
     }
 
 	//Wouldn't this halt game thread for seconds!!! thats not good
-    physics_world_->continueForTime(seconds);
-    while(!physics_world_->isPaused())
+    physicsWorld->continueForTime(seconds);
+    while(!physicsWorld->isPaused())
     {
         continue; 
     }
@@ -109,63 +145,31 @@ void ASimModeWorldBase::ContinueForTime(double seconds)
 
 void ASimModeWorldBase::ContinueForFrames(uint32_t frames)
 {
-    if(physics_world_->isPaused())
+    if(physicsWorld->isPaused())
     {
-        physics_world_->pause(false);
+        physicsWorld->pause(false);
         UGameplayStatics::SetGamePaused(this->GetWorld(), false);        
     }
     
-    physics_world_->setFrameNumber((uint32_t)GFrameNumber);
-    physics_world_->continueForFrames(frames);
-    while(!physics_world_->isPaused())
+    physicsWorld->setFrameNumber((uint32_t)GFrameNumber);
+    physicsWorld->continueForFrames(frames);
+    while(!physicsWorld->isPaused())
     {
-        physics_world_->setFrameNumber((uint32_t)GFrameNumber);
+        physicsWorld->setFrameNumber((uint32_t)GFrameNumber);
     }
     UGameplayStatics::SetGamePaused(this->GetWorld(), true);
 }
+#pragma endregion Pause Functions
 
-void ASimModeWorldBase::SetWind(const msr::airlib::Vector3r& wind) const
-{
-    physics_engine_->setWind(wind);
-}
-
-void ASimModeWorldBase::updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter)
+#pragma region Debug
+void ASimModeWorldBase::UpdateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter)
 {
     unused(debug_reporter);
     //we use custom debug reporting for this class
 }
 
-void ASimModeWorldBase::Tick(float DeltaSeconds)
-{
-    { //keep this lock as short as possible
-        physics_world_->lock();
-
-        physics_world_->enableStateReport(EnableReport);
-        physics_world_->updateStateReport();
-
-        for (auto& api : GetApiProvider()->getVehicleSimApis())
-            api->updateRenderedState(DeltaSeconds);
-
-        physics_world_->unlock();
-    }
-
-    //perform any expensive rendering update outside of lock region
-    for (auto& api : GetApiProvider()->getVehicleSimApis())
-        api->updateRendering(DeltaSeconds);
-
-    Super::Tick(DeltaSeconds);
-}
-
-void ASimModeWorldBase::Reset()
-{
-    UAirBlueprintLib::RunCommandOnGameThread([this]() {
-        physics_world_->reset();
-    }, true);
-    
-    //no need to call base reset because of our custom implementation
-}
-
 std::string ASimModeWorldBase::GetDebugReport()
 {
-    return physics_world_->getDebugReport();
+    return physicsWorld->getDebugReport();
 }
+#pragma endregion Debug

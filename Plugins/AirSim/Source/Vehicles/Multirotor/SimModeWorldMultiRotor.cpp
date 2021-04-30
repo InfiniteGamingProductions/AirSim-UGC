@@ -19,16 +19,10 @@
 void ASimModeWorldMultiRotor::BeginPlay()
 {
     Super::BeginPlay();
-
-    //let base class setup physics world
-    initializeForPlay();
 }
 
 void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    //stop physics thread before we dismantle
-    stopAsyncUpdator();
-
     Super::EndPlay(EndPlayReason);
 }
 
@@ -55,19 +49,19 @@ void ASimModeWorldMultiRotor::SetupClockSpeed()
 
         //Approach 1: scale clock period, no longer used now due to quadrotor instability
         //ClockFactory::get(std::make_shared<msr::airlib::SteppableClock>(
-        //static_cast<msr::airlib::TTimeDelta>(getPhysicsLoopPeriod() * 1E-9 * clock_speed)));
+        //static_cast<msr::airlib::TTimeDelta>(GetPhysicsLoopPeriod() * 1E-9 * clock_speed)));
 
         //Approach 2: scale control loop frequency if clock is speeded up
         if (clock_speed >= 1) {
             ClockFactory::get(std::make_shared<msr::airlib::SteppableClock>(
-                static_cast<msr::airlib::TTimeDelta>(getPhysicsLoopPeriod() * 1E-9))); //no clock_speed multiplier
+                static_cast<msr::airlib::TTimeDelta>(GetPhysicsLoopPeriod() * 1E-9))); //no clock_speed multiplier
 
-            setPhysicsLoopPeriod(getPhysicsLoopPeriod() / static_cast<long long>(clock_speed));
+            SetPhysicsLoopPeriod(GetPhysicsLoopPeriod() / static_cast<long long>(clock_speed));
         }
         else {
             //for slowing down, this don't generate instability
             ClockFactory::get(std::make_shared<msr::airlib::SteppableClock>(
-                static_cast<msr::airlib::TTimeDelta>(getPhysicsLoopPeriod() * 1E-9 * clock_speed)));
+                static_cast<msr::airlib::TTimeDelta>(GetPhysicsLoopPeriod() * 1E-9 * clock_speed)));
         }
     }
     else

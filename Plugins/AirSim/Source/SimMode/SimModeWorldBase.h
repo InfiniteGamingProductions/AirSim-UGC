@@ -25,49 +25,56 @@ public:
     virtual void Tick( float DeltaSeconds ) override;
 
     virtual void Reset() override;
-    virtual std::string GetDebugReport() override;
 
+#pragma region Physics
+public:
+	virtual void SetWind(const msr::airlib::Vector3r& wind) const override;
+
+protected:
+	virtual void RegisterPhysicsBody(msr::airlib::VehicleSimApiBase* physicsBody) override;
+
+	void StartAsyncUpdator();
+	void StopAsyncUpdator();
+
+	long long GetPhysicsLoopPeriod() const;
+	void SetPhysicsLoopPeriod(long long  period);
+private:
+	typedef msr::airlib::UpdatableObject UpdatableObject;
+	typedef msr::airlib::PhysicsEngineBase PhysicsEngineBase;
+	typedef msr::airlib::ClockFactory ClockFactory;
+
+	//create the physics engine as needed from settings
+	std::unique_ptr<PhysicsEngineBase> CreatePhysicsEngine();
+
+private:
+	std::unique_ptr<msr::airlib::PhysicsWorld> physicsWorld;
+	PhysicsEngineBase* physicsEngine;
+
+	/*
+	300Hz seems to be minimum for non-aggressive flights
+	400Hz is needed for moderately aggressive flights (such as
+	high yaw rate with simultaneous back move)
+	500Hz is recommended for more aggressive flights
+	Lenovo P50 high-end config laptop seems to be topping out at 400Hz.
+	HP Z840 desktop high-end config seems to be able to go up to 500Hz.
+	To increase freq with limited CPU power, switch Barometer to constant ref mode.
+	*/
+	long long physicsLoopPeriod = 3000000LL; //3ms
+#pragma endregion Physics
+
+#pragma region Pause Functions
+public:
     virtual bool IsSimulationPaused() const override;
     virtual void PauseSimulation(bool is_paused) override;
     virtual void ContinueForTime(double seconds) override;
     virtual void ContinueForFrames(uint32_t frames) override;
+#pragma endregion Pause Functions
 
-    virtual void SetWind(const msr::airlib::Vector3r& wind) const override;
+#pragma region Debug
+public:
+	virtual std::string GetDebugReport() override;
 
 protected:
-    void startAsyncUpdator();
-    void stopAsyncUpdator();
-    virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter) override;
-
-    //should be called by derived class once all ApiProvider is ready to use
-    void initializeForPlay();
-
-    //used for adding physics bodies on the fly
-    virtual void registerPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody) override;
-
-    long long getPhysicsLoopPeriod() const;
-    void setPhysicsLoopPeriod(long long  period);
-private:
-    typedef msr::airlib::UpdatableObject UpdatableObject;
-    typedef msr::airlib::PhysicsEngineBase PhysicsEngineBase;
-    typedef msr::airlib::ClockFactory ClockFactory;
-
-    //create the physics engine as needed from settings
-    std::unique_ptr<PhysicsEngineBase> createPhysicsEngine();
-
-private:
-    std::unique_ptr<msr::airlib::PhysicsWorld> physics_world_;
-    PhysicsEngineBase* physics_engine_;
-
-    /*
-    300Hz seems to be minimum for non-aggressive flights
-    400Hz is needed for moderately aggressive flights (such as
-    high yaw rate with simultaneous back move)
-    500Hz is recommended for more aggressive flights
-    Lenovo P50 high-end config laptop seems to be topping out at 400Hz.
-    HP Z840 desktop high-end config seems to be able to go up to 500Hz.
-    To increase freq with limited CPU power, switch Barometer to constant ref mode.
-    */
-    long long physics_loop_period_ = 3000000LL; //3ms
-
+	virtual void UpdateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter) override;
+#pragma endregion Debug
 };
