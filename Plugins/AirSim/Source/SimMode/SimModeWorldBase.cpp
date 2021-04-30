@@ -20,6 +20,8 @@ void ASimModeWorldBase::BeginPlay()
 
 void ASimModeWorldBase::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
+
 	//keep this lock as short as possible
 	physicsWorld->lock();
 
@@ -34,8 +36,6 @@ void ASimModeWorldBase::Tick(float DeltaSeconds)
 	//perform any expensive rendering update outside of lock region
 	for (auto& api : GetApiProvider()->getVehicleSimApis())
 		api->updateRendering(DeltaSeconds);
-
-	Super::Tick(DeltaSeconds);
 }
 
 void ASimModeWorldBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -115,15 +115,11 @@ std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::CreateP
 #pragma endregion Physics
 
 #pragma region Pause Functions
-bool ASimModeWorldBase::IsSimulationPaused() const
-{
-    return physicsWorld->isPaused();
-}
-
 void ASimModeWorldBase::PauseSimulation(bool is_paused)
 {
+	Super::PauseSimulation(is_paused);
+
     physicsWorld->pause(is_paused);
-    UGameplayStatics::SetGamePaused(this->GetWorld(), is_paused);
 }
 
 void ASimModeWorldBase::ContinueForTime(double seconds)
@@ -140,6 +136,7 @@ void ASimModeWorldBase::ContinueForTime(double seconds)
     {
         continue; 
     }
+
     UGameplayStatics::SetGamePaused(this->GetWorld(), true);
 }
 
@@ -157,6 +154,7 @@ void ASimModeWorldBase::ContinueForFrames(uint32_t frames)
     {
         physicsWorld->setFrameNumber((uint32_t)GFrameNumber);
     }
+
     UGameplayStatics::SetGamePaused(this->GetWorld(), true);
 }
 #pragma endregion Pause Functions

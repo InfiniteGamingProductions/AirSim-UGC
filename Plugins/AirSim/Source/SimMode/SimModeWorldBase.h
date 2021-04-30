@@ -64,7 +64,6 @@ private:
 
 #pragma region Pause Functions
 public:
-    virtual bool IsSimulationPaused() const override;
     virtual void PauseSimulation(bool is_paused) override;
     virtual void ContinueForTime(double seconds) override;
     virtual void ContinueForFrames(uint32_t frames) override;

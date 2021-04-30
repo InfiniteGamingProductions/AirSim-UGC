@@ -257,14 +257,11 @@ void ASimModeBase::SetTimeOfDay(bool is_enabled, const std::string& start_dateti
 bool ASimModeBase::IsSimulationPaused() const
 {
     return UGameplayStatics::IsGamePaused(this);
-	//return false;
 }
 
 void ASimModeBase::PauseSimulation(bool is_paused)
 {
-    //should be overridden by derived class
-    unused(is_paused);
-    throw std::domain_error("Pause is not implemented by SimMode");
+	UGameplayStatics::SetGamePaused(GetWorld(), is_paused);
 }
 
 void ASimModeBase::ContinueForTime(double seconds)

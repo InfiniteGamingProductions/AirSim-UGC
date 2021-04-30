@@ -339,7 +339,8 @@ void ASimHUD::PauseSimulation()
 
 	PauseMenu->AddToViewport();
 
-	UGameplayStatics::SetGamePaused(this, true);
+	//UGameplayStatics::SetGamePaused(this, true);
+	SimMode->PauseSimulation(true);
 }
 
 void ASimHUD::UnpauseSimulation()
@@ -352,7 +353,8 @@ void ASimHUD::UnpauseSimulation()
 
 		PauseMenu->RemoveFromViewport();
 
-		UGameplayStatics::SetGamePaused(this, false);
+		//UGameplayStatics::SetGamePaused(this, false);
+		SimMode->PauseSimulation(false);
 	}
 }
 

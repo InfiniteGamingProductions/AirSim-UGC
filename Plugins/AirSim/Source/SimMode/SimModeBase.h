@@ -133,12 +133,14 @@ public:
 	/**
 	* Called to determine if the simulation is paused or not 
 	* @return If the simulation is paused or not
+	* @note Override Optional
 	*/
 	virtual bool IsSimulationPaused() const;
 
 	/**
-	* Called to pause or unpause the simulation
-	* @param Pause - true if you want to pause the sim, false if you want to resume
+	* Called to pause or unpause the simulation. Will handle calling UGameplayStatics::SetGamePaused as needed.
+	* @param Pause - true if you want to pause, false if you want to resume
+	* @note Override Optional
 	*/
 	virtual void PauseSimulation(bool Pause);
 
@@ -146,6 +148,7 @@ public:
 	* Called by WorldSimAPI to unpause for seconds and then pause again
 	* @param Seconds - The time in seconds to continue
 	* @warning Depending on implementation this halts the game thread!
+	* @note Override Required
 	*/
 	virtual void ContinueForTime(double Seconds);
 
@@ -153,6 +156,7 @@ public:
 	* Called by WorldSimAPI to unpause for a number of frames and then pause again
 	* @param Frames - The number of Frames to continue
 	* @warning Depending on implementation this halts the game thread!
+	* @note Override Required
 	*/
 	virtual void ContinueForFrames(uint32_t Frames);
 #pragma endregion Pause Functions
