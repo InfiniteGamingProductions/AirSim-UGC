@@ -11,7 +11,7 @@ void ASimModeWorldBase::BeginPlay()
 void ASimModeWorldBase::initializeForPlay()
 {
     std::vector<msr::airlib::UpdatableObject*> vehicles;
-    for (auto& api : getApiProvider()->getVehicleSimApis())
+    for (auto& api : GetApiProvider()->getVehicleSimApis())
         vehicles.push_back(api);
     //TODO: directly accept getVehicleSimApis() using generic container
 
@@ -57,7 +57,7 @@ void ASimModeWorldBase::setPhysicsLoopPeriod(long long  period)
 std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::createPhysicsEngine()
 {
     std::unique_ptr<PhysicsEngineBase> physics_engine;
-    std::string physics_engine_name = getSettings().physics_engine_name;
+    std::string physics_engine_name = GetSettings().physics_engine_name;
     if (physics_engine_name == "")
         physics_engine.reset(); //no physics engine
     else if (physics_engine_name == "FastPhysicsEngine") {
@@ -69,7 +69,7 @@ std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::createP
             physics_engine.reset(new msr::airlib::FastPhysicsEngine());
         }
 
-        physics_engine->setWind(getSettings().wind);
+        physics_engine->setWind(GetSettings().wind);
     }
     else {
         physics_engine.reset();
@@ -143,14 +143,14 @@ void ASimModeWorldBase::Tick(float DeltaSeconds)
         physics_world_->enableStateReport(EnableReport);
         physics_world_->updateStateReport();
 
-        for (auto& api : getApiProvider()->getVehicleSimApis())
+        for (auto& api : GetApiProvider()->getVehicleSimApis())
             api->updateRenderedState(DeltaSeconds);
 
         physics_world_->unlock();
     }
 
     //perform any expensive rendering update outside of lock region
-    for (auto& api : getApiProvider()->getVehicleSimApis())
+    for (auto& api : GetApiProvider()->getVehicleSimApis())
         api->updateRendering(DeltaSeconds);
 
     Super::Tick(DeltaSeconds);

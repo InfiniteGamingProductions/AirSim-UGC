@@ -23,9 +23,6 @@ class AIRSIM_API ASimModeBase : public AActor
     GENERATED_BODY()
 
 public:
-	/** Returns a reference to the initilized SimMode from a singleton format */
-	UFUNCTION(BlueprintPure, Category = "Airsim")
-	static ASimModeBase* GetSimMode();
 
 	ASimModeBase();
 	virtual void BeginPlay() override;
@@ -36,12 +33,103 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Airsim")
     virtual void Reset();
 
+protected:
+	typedef msr::airlib::AirSimSettings AirSimSettings;
+	typedef common_utils::Utils Utils;
+	typedef msr::airlib::SensorBase::SensorType SensorType;
+	typedef msr::airlib::Vector3r Vector3r;
+	typedef msr::airlib::Pose Pose;
+	typedef msr::airlib::VectorMath VectorMath;
+
+#pragma region Vehicles
+public:
+	/**
+	* Spawn A new vehicle at runtime
+	* @param vehicle_name - The Name of the vehicle actor
+	* @param vehicle_type - 
+	* @param pose - The spawn location and rotation
+	* @param pawn_path - The path to the pawn blueprint that you want to spawn
+	* @return Was Sucessfull?
+	*/
+	bool SpawnVehicleAtRuntime(const std::string& vehicle_name, const std::string& vehicle_type, const msr::airlib::Pose& pose, const std::string& pawn_path = "");
+
+protected:
+	
+	/**
+	* Get the vehicles that have already been spawned
+	* @param OutPawns - the vehicle pawns that were found
+	* @note Override Required
+	*/
+	virtual void GetExistingVehiclePawns(TArray<AActor*>& OutPawns) const;
+
+	/**
+	* Check if the vehicle type is supported by the simmode
+	* @return Returns true if the vehicle type is supported
+	* @note Override Required
+	*/
+	virtual bool IsVehicleTypeSupported(const std::string& vehicle_type) const;
+
+	/**
+	* Returns the pawn path set in the AirSimSettings
+	* @note Override Required
+	*/
+	virtual std::string GetVehiclePawnPath(const AirSimSettings::VehicleSetting& vehicle_setting) const;
+
+	/**
+	* Returns the PawnEvents object asociated with a vehicle pawn
+	* @note Override Required
+	*/
+	virtual PawnEvents* GetVehiclePawnEvents(APawn* pawn) const;
+
+	/**
+	* Get the cameras from a vehicle pawn
+	* @note Override Required
+	*/
+	virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> GetVehiclePawnCameras(APawn* pawn) const;
+
+	/**
+	* Called To Register a new vechile with custom physics engine
+	* @note Override Required, Unless not using custom physics engine
+	*/
+	virtual void registerPhysicsBody(msr::airlib::VehicleSimApiBase* physicsBody);
+
+	/**
+	* Setup a new vehicle pawn. Is called when the new vehicle is Spawned
+	* @note Base implemintation doesn't do anything
+	* @deprecated Should Use BeginPlay to do setup like this
+	*/
+	virtual void InitializeVehiclePawn(APawn* pawn);
+
+	/**
+	* Spawns a new vehicle pawn using vehicle settings to setup paramaters
+	* @returns A pointer to the newly spawned vehicle
+	* @note Override Optional
+	*/
+	virtual APawn* SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehicle_setting);
+
+	/**
+	* Spawns Vehicles from AirSim Settings and Initilizes Camera Director. Is called durring BeginPlay()
+	* @note Override Optional
+	*/
+	virtual void SetupVehiclesAndCamera();
+
+	/**
+	* Checks if a vehicle is available to use
+	* @note Throws Error if vehicle not available
+	*/
+	void CheckVehicleReady();
+
+#pragma endregion Vehicles
+
+public:
 	/**
 	* Used to set the Wind Direction and Magnitude
+	* @note Override Required
 	*/
 	virtual void SetWind(const msr::airlib::Vector3r& wind) const;
 
-	// Pause Functions
+#pragma region Pause Functions
+public:
 	/**
 	* Called to determine if the simulation is paused or not 
 	* @return If the simulation is paused or not
@@ -67,8 +155,10 @@ public:
 	* @warning Depending on implementation this halts the game thread!
 	*/
 	virtual void ContinueForFrames(uint32_t Frames);
+#pragma endregion Pause Functions
 
-	// Recording Functions
+#pragma region Recording Functions
+public:
 	/**
 	* Toggles frame recording
 	* @return returns if recording is enabled or not
@@ -85,13 +175,79 @@ public:
 	/** Checks if Recording Thread is recording */
     virtual bool IsRecording() const;
 
-	// Debug Functions
-    /**
-	* Returns a Debug Report that is shown on the HUD
-	* @return A Debug Report
-	*/
-    virtual std::string GetDebugReport();
+private:
+	int RecordTickCount;
+#pragma endregion Recording Functions
 
+#pragma region API Functions
+public:
+	/** Starts API Server */
+    void StartApiServer();
+
+	/** Kills API Server */
+    void StopApiServer();
+
+	/** Returns true if Api Server is running */
+    bool IsApiServerStarted();
+
+	/** Returns the API Provider */
+	msr::airlib::ApiProvider* GetApiProvider() const
+	{
+		return ApiProviderRef.get();
+	}
+
+	/** Returns the vehicles PawnSimApi from the vehicle name */
+	PawnSimApi* GetVehicleSimApi(const std::string& vehicle_name = "")
+	{
+		return static_cast<PawnSimApi*>(ApiProviderRef->getVehicleSimApi(vehicle_name));
+	}
+
+protected:
+	/**
+	* Initilizes the Api Server
+	* @return Returns a pointer to the API Server that was created
+	* @note Base implementation returns nullptr as it is assumed simmode doesn't support APIs
+	* @note Must Override
+	*/
+	virtual std::unique_ptr<msr::airlib::ApiServerBase> CreateApiServer() const;
+
+	/**
+	* Creates a PawnSimApi for a given vehicle_pawn. Calls CreateVehicleSimApi()
+	* @return Returns a pointer to the PawnSimApi object created for the vehicle_pawn
+	* @note Optional Override
+	*/
+	virtual std::unique_ptr<PawnSimApi> CreateVehicleApi(APawn* vehicle_pawn);
+
+	/**
+	* Creates the vehicle sim api object
+	* @param pawn_sim_api_params - Params for the pawn sim api (Base implementation doesn't use this)
+	* @return Returns a pointer to the PawnSimApi object
+	* @note Base implementation creates a base PawnSimApi, it is recommended to override this with your vehicles PawnSimApi
+	* @note Must Override
+	*/
+	virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const;
+
+	//TODO: Cleanup GetVehicleApi, it seems that pawn_sim_api_params is not used on any of the implementations
+	/**
+	* Gets the Vehicle Api from a PawnSimApi reference
+	* @param pawn_sim_api_params - The paramaters associated with the pawnSimApi (Not Used currently)
+	* @param sim_api - The PawnSimApi to retrive the vehicle api from
+	* @note Base implementation assumes no VehicleApi and returns nullptr
+	* @note Must Override
+	*/
+	virtual msr::airlib::VehicleApiBase* GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params, const PawnSimApi* sim_api) const;
+private:
+
+	std::unique_ptr<msr::airlib::WorldSimApiBase> WorldSimApiRef;
+	std::unique_ptr<msr::airlib::ApiProvider> ApiProviderRef;
+	std::unique_ptr<msr::airlib::ApiServerBase> ApiServer;
+
+	std::vector<std::unique_ptr<msr::airlib::VehicleSimApiBase>> VehicleSimApis;
+    
+#pragma endregion API Functions
+
+#pragma region Time Of Day
+public:
 	//TODO: Fillout Paramater Deffenitions
 	/**
 	* Sets the Time of Day in UE4
@@ -102,142 +258,138 @@ public:
 	* @param update_intercal_secs
 	* @param move_sun
 	*/
-    virtual void SetTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
-        float celestial_clock_speed, float update_interval_secs, bool move_sun);
+	virtual void SetTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst, float celestial_clock_speed, float update_interval_secs, bool move_sun);
 
-	// API Functions
-	/** Starts API Server */
-    void StartApiServer();
+private:
+	typedef msr::airlib::ClockFactory ClockFactory;
+	typedef msr::airlib::TTimePoint TTimePoint;
+	typedef msr::airlib::TTimeDelta TTimeDelta;
 
-	/** Kills API Server */
-    void StopApiServer();
+	UPROPERTY() UClass* sky_sphere_class_;
 
-	/** Returns true if Api Server is running */
-    bool IsApiServerStarted();
+	UPROPERTY() AActor* sky_sphere_;
+	UPROPERTY() ADirectionalLight* sun_;
+	FRotator default_sun_rotation_;
+	TTimePoint tod_sim_clock_start_;             // sim start in local time
+	TTimePoint tod_last_update_;
+	TTimePoint tod_start_time_;                  // tod, configurable
+	bool tod_enabled_;
+	float tod_celestial_clock_speed_;
+	float tod_update_interval_secs_;
+	bool tod_move_sun_;
+
+	void initializeTimeOfDay();
+	void advanceTimeOfDay();
+	void setSunRotation(FRotator rotation);
+
+#pragma endregion Time Of Day
+
+#pragma region CameraDirector
+public:
+	// Reference to the camera director actor
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ACameraDirector* CameraDirector;
 
 protected:
-	virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const;
-
-public:
-    bool createVehicleAtRuntime(const std::string& vehicle_name, const std::string& vehicle_type,
-        const msr::airlib::Pose& pose, const std::string& pawn_path = "");
-
-    const NedTransform& getGlobalNedTransform();
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Refs")
-    ACameraDirector* CameraDirector;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debugging")
-    bool EnableReport = false;
-
-    msr::airlib::ApiProvider* getApiProvider() const
-    {
-        return api_provider_.get();
-    }
-    const PawnSimApi* getVehicleSimApi(const std::string& vehicle_name = "") const
-    {
-        return static_cast<PawnSimApi*>(api_provider_->getVehicleSimApi(vehicle_name));
-    }
-    PawnSimApi* getVehicleSimApi(const std::string& vehicle_name = "")
-    {
-        return static_cast<PawnSimApi*>(api_provider_->getVehicleSimApi(vehicle_name));
-    }
-
-    TMap<FString, FAssetData> asset_map;
-    TMap<FString, AActor*> scene_object_map;
-
-protected: //must overrides
-    typedef msr::airlib::AirSimSettings AirSimSettings;
-
-    
-    virtual void getExistingVehiclePawns(TArray<AActor*>& pawns) const;
-    virtual bool isVehicleTypeSupported(const std::string& vehicle_type) const;
-    virtual std::string getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const;
-    virtual PawnEvents* getVehiclePawnEvents(APawn* pawn) const;
-    virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> getVehiclePawnCameras(APawn* pawn) const;
-    virtual void initializeVehiclePawn(APawn* pawn);
-    virtual std::unique_ptr<PawnSimApi> createVehicleSimApi(
-        const PawnSimApi::Params& pawn_sim_api_params) const;
-    virtual msr::airlib::VehicleApiBase* getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
-        const PawnSimApi* sim_api) const;
-    virtual void registerPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBody);
-
-protected: //optional overrides
-    virtual APawn* createVehiclePawn(const AirSimSettings::VehicleSetting& vehicle_setting);
-    virtual std::unique_ptr<PawnSimApi> createVehicleApi(APawn* vehicle_pawn);
-    virtual void setupVehiclesAndCamera();
-    virtual void setupInputBindings();
-    //called when SimMode should handle clock speed setting
-    virtual void setupClockSpeed();
-    void initializeCameraDirector(const FTransform& camera_transform, float follow_distance);
-    void checkVehicleReady(); //checks if vehicle is available to use
-    virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
+	/**
+	* Spawns the Camera Director and sets it up.
+	*/
+	void InitializeCameraDirector(const FTransform& camera_transform, float follow_distance);
 
 	/**
 	* Used to get the first View Mode for the camera director
 	* @return Returns the camera mode that should be used
+	* @note Optional override
 	*/
 	virtual ECameraDirectorMode GetInitialViewMode() const;
 
-protected: //Utility methods for derived classes
-    virtual const msr::airlib::AirSimSettings& getSettings() const;
-    FRotator toFRotator(const AirSimSettings::Rotation& rotation, const FRotator& default_val);
+	UPROPERTY() TSubclassOf<APIPCamera> PIPCameraClass;
+private:
+	UPROPERTY() TSubclassOf<ACameraDirector> CameraDirectorClass;
+#pragma endregion CameraDirector
 
+#pragma region Debug
+public:
+	/**
+	* Returns a Debug Report that is shown on the HUD
+	* @return A Debug Report
+	*/
+	virtual std::string GetDebugReport();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debugging")
+	bool EnableReport = false;
 
 protected:
-    int record_tick_count;
-    UPROPERTY() UClass* pip_camera_class;
-    UPROPERTY() UParticleSystem* collision_display_template;
+	//Optional Override
+	virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
 
 private:
-    typedef common_utils::Utils Utils;
-    typedef msr::airlib::ClockFactory ClockFactory;
-    typedef msr::airlib::TTimePoint TTimePoint;
-    typedef msr::airlib::TTimeDelta TTimeDelta;
-    typedef msr::airlib::SensorBase::SensorType SensorType;
-    typedef msr::airlib::Vector3r Vector3r;
-    typedef msr::airlib::Pose Pose;
-    typedef msr::airlib::VectorMath VectorMath;
+	msr::airlib::StateReporterWrapper debug_reporter_;
+
+	bool lidar_checks_done_ = false;
+	bool lidar_draw_debug_points_ = false;
+
+	void drawLidarDebugPoints();
+	void drawDistanceSensorDebugPoints();
+
+	void ShowClockStats();
+#pragma endregion Debug
+
+#pragma region Singleton
+public:
+	/** Returns a reference to the initilized SimMode from a singleton format */
+	UFUNCTION(BlueprintPure, Category = "Airsim")
+		static ASimModeBase* GetSimMode();
 
 private:
-    //assets loaded in constructor
-    UPROPERTY() UClass* external_camera_class_;
-    UPROPERTY() UClass* camera_director_class_;
-    UPROPERTY() UClass* sky_sphere_class_;
+	static ASimModeBase* SIMMODE;
 
+#pragma endregion Singleton
 
-    UPROPERTY() AActor* sky_sphere_;
-    UPROPERTY() ADirectionalLight* sun_;
-    FRotator default_sun_rotation_;
-    TTimePoint tod_sim_clock_start_;             // sim start in local time
-    TTimePoint tod_last_update_;
-    TTimePoint tod_start_time_;                  // tod, configurable
-    bool tod_enabled_;
-    float tod_celestial_clock_speed_;
-    float tod_update_interval_secs_;
-    bool tod_move_sun_;
+#pragma region Utility
+public:
+	//Why do these exist? 🤷‍
+	TMap<FString, FAssetData> AssetMap;
+	TMap<FString, AActor*> SceneObjectMap;
 
-    std::unique_ptr<NedTransform> global_ned_transform_;
-    std::unique_ptr<msr::airlib::WorldSimApiBase> world_sim_api_;
-    std::unique_ptr<msr::airlib::ApiProvider> api_provider_;
-    std::unique_ptr<msr::airlib::ApiServerBase> api_server_;
-    msr::airlib::StateReporterWrapper debug_reporter_;
+	const NedTransform& GetGlobalNedTransform();
 
-    std::vector<std::unique_ptr<msr::airlib::VehicleSimApiBase>> vehicle_sim_apis_;
+protected:
+	/**
+	* Register Input Bindings as needed
+	* @note Optional Override be sure to call base implemetation
+	*/
+	virtual void SetupInputBindings();
 
-    UPROPERTY()
-        TArray<AActor*> spawned_actors_; //keep refs alive from Unreal GC
+	/**
+	* Returns the AirSimSettings Object that contains settings for setup
+	*/
+	const msr::airlib::AirSimSettings& GetSettings() const;
 
-    bool lidar_checks_done_ = false; 
-    bool lidar_draw_debug_points_ = false;
-    static ASimModeBase* SIMMODE;
+	/**
+	* Called when SimMode should handle clock speed setting
+	* @note Optional Override
+	*/
+	virtual void SetupClockSpeed();
+
+	/**
+	* Converts Airsim Rotation to FRotator
+	* @param rotation - The Airsim Rotation
+	* @param default_val - A Starting frame of refrence for the conversion
+	* @return Returns converted FRotator
+	*/
+	FRotator ToFRotator(const AirSimSettings::Rotation& rotation, const FRotator& default_val = FRotator::ZeroRotator);
+
 private:
-    void setStencilIDs();
-    void initializeTimeOfDay();
-    void advanceTimeOfDay();
-    void setSunRotation(FRotator rotation);
-    void setupPhysicsLoopPeriod();
-    void showClockStats();
-    void drawLidarDebugPoints();
-    void drawDistanceSensorDebugPoints();
+	std::unique_ptr<NedTransform> GlobalNedTransform;
+
+	UPROPERTY() TArray<AActor*> SpawnedActors; //keep refs alive from Unreal GC
+
+	UPROPERTY() UParticleSystem* CollisionDisplayParticleSystem;
+
+	void SetupPhysicsLoopPeriod();
+
+	void SetStencilIDs();
+
+#pragma endregion Utility
 };

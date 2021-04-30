@@ -17,27 +17,27 @@
 #include "api/RpcLibServerBase.hpp"
 
 
-std::unique_ptr<msr::airlib::ApiServerBase> ASimModeComputerVision::createApiServer() const
+std::unique_ptr<msr::airlib::ApiServerBase> ASimModeComputerVision::CreateApiServer() const
 {
 #ifdef AIRLIB_NO_RPC
-    return ASimModeBase::createApiServer();
+    return ASimModeBase::CreateApiServer();
 #else
     return std::unique_ptr<msr::airlib::ApiServerBase>(new msr::airlib::RpcLibServerBase(
-        getApiProvider(), getSettings().api_server_address, getSettings().api_port));
+        GetApiProvider(), GetSettings().api_server_address, GetSettings().api_port));
 #endif
 }
 
-void ASimModeComputerVision::getExistingVehiclePawns(TArray<AActor*>& pawns) const
+void ASimModeComputerVision::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
     UAirBlueprintLib::FindAllActor<TVehiclePawn>(this, pawns);
 }
 
-bool ASimModeComputerVision::isVehicleTypeSupported(const std::string& vehicle_type) const
+bool ASimModeComputerVision::IsVehicleTypeSupported(const std::string& vehicle_type) const
 {
     return vehicle_type == msr::airlib::AirSimSettings::kVehicleTypeComputerVision;
 }
 
-std::string ASimModeComputerVision::getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const
+std::string ASimModeComputerVision::GetVehiclePawnPath(const AirSimSettings::VehicleSetting& vehicle_setting) const
 {
     //decide which derived BP to use
     std::string pawn_path = vehicle_setting.pawn_path;
@@ -47,21 +47,21 @@ std::string ASimModeComputerVision::getVehiclePawnPathName(const AirSimSettings:
     return pawn_path;
 }
 
-PawnEvents* ASimModeComputerVision::getVehiclePawnEvents(APawn* pawn) const
+PawnEvents* ASimModeComputerVision::GetVehiclePawnEvents(APawn* pawn) const
 {
     return static_cast<TVehiclePawn*>(pawn)->getPawnEvents();
 }
-const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeComputerVision::getVehiclePawnCameras(
+const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeComputerVision::GetVehiclePawnCameras(
     APawn* pawn) const
 {
     return static_cast<const TVehiclePawn*>(pawn)->getCameras();
 }
-void ASimModeComputerVision::initializeVehiclePawn(APawn* pawn)
+void ASimModeComputerVision::InitializeVehiclePawn(APawn* pawn)
 {
     static_cast<TVehiclePawn*>(pawn)->initializeForBeginPlay();
 }
 
-std::unique_ptr<PawnSimApi> ASimModeComputerVision::createVehicleSimApi(
+std::unique_ptr<PawnSimApi> ASimModeComputerVision::CreateVehicleSimApi(
     const PawnSimApi::Params& pawn_sim_api_params) const
 {
     auto vehicle_sim_api = std::unique_ptr<PawnSimApi>(new PawnSimApi(pawn_sim_api_params));
@@ -70,7 +70,7 @@ std::unique_ptr<PawnSimApi> ASimModeComputerVision::createVehicleSimApi(
     return vehicle_sim_api;
 }
 
-msr::airlib::VehicleApiBase* ASimModeComputerVision::getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
+msr::airlib::VehicleApiBase* ASimModeComputerVision::GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
     const PawnSimApi* sim_api) const
 {
     //we don't have real vehicle so no vehicle API

@@ -174,7 +174,7 @@ void ASimHUD::InitializeSubWindows()
 	if (!SimMode)
 		return;
 
-	auto default_vehicle_sim_api = SimMode->getVehicleSimApi();
+	auto default_vehicle_sim_api = SimMode->GetVehicleSimApi();
 
 	if (default_vehicle_sim_api) {
 		auto camera_count = default_vehicle_sim_api->getCameraCount();
@@ -192,7 +192,7 @@ void ASimHUD::InitializeSubWindows()
 	for (size_t window_index = 0; window_index < AirSimSettings::kSubwindowCount; ++window_index) {
 
 		const auto& subwindow_setting = AirSimSettings::singleton().subwindow_settings.at(window_index);
-		auto vehicle_sim_api = SimMode->getVehicleSimApi(subwindow_setting.vehicle_name);
+		auto vehicle_sim_api = SimMode->GetVehicleSimApi(subwindow_setting.vehicle_name);
 
 		if (vehicle_sim_api) {
 			if (vehicle_sim_api->getCamera(subwindow_setting.camera_name) != nullptr)
@@ -245,7 +245,7 @@ void ASimHUD::OnToggleHelp()
 
 void ASimHUD::OnToggleTrace()
 {
-	SimMode->getVehicleSimApi()->toggleTrace();
+	SimMode->GetVehicleSimApi()->toggleTrace();
 }
 
 void ASimHUD::OnToggleSubwindow0()

@@ -32,14 +32,14 @@ void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void ASimModeWorldMultiRotor::setupClockSpeed()
+void ASimModeWorldMultiRotor::SetupClockSpeed()
 {
     typedef msr::airlib::ClockFactory ClockFactory;
 
-    float clock_speed = getSettings().clock_speed;
+    float clock_speed = GetSettings().clock_speed;
 
     //setup clock in ClockFactory
-    std::string clock_type = getSettings().clock_type;
+    std::string clock_type = GetSettings().clock_type;
 
     if (clock_type == "ScalableClock") {
         //scalable clock returns interval same as wall clock but multiplied by a scale factor
@@ -77,22 +77,22 @@ void ASimModeWorldMultiRotor::setupClockSpeed()
 
 //-------------------------------- overrides -----------------------------------------------//
 
-std::unique_ptr<msr::airlib::ApiServerBase> ASimModeWorldMultiRotor::createApiServer() const
+std::unique_ptr<msr::airlib::ApiServerBase> ASimModeWorldMultiRotor::CreateApiServer() const
 {
 #ifdef AIRLIB_NO_RPC
-    return ASimModeBase::createApiServer();
+    return ASimModeBase::CreateApiServer();
 #else
     return std::unique_ptr<msr::airlib::ApiServerBase>(new msr::airlib::MultirotorRpcLibServer(
-        getApiProvider(), getSettings().api_server_address, getSettings().api_port));
+        GetApiProvider(), GetSettings().api_server_address, GetSettings().api_port));
 #endif
 }
 
-void ASimModeWorldMultiRotor::getExistingVehiclePawns(TArray<AActor*>& pawns) const
+void ASimModeWorldMultiRotor::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
     UAirBlueprintLib::FindAllActor<AFlyingPawn>(this, pawns);
 }
 
-bool ASimModeWorldMultiRotor::isVehicleTypeSupported(const std::string& vehicle_type) const
+bool ASimModeWorldMultiRotor::IsVehicleTypeSupported(const std::string& vehicle_type) const
 {
     return ((vehicle_type == AirSimSettings::kVehicleTypeSimpleFlight) ||
             (vehicle_type == AirSimSettings::kVehicleTypePX4) ||
@@ -100,7 +100,7 @@ bool ASimModeWorldMultiRotor::isVehicleTypeSupported(const std::string& vehicle_
             (vehicle_type == AirSimSettings::kVehicleTypeArduCopter));
 }
 
-std::string ASimModeWorldMultiRotor::getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const
+std::string ASimModeWorldMultiRotor::GetVehiclePawnPath(const AirSimSettings::VehicleSetting& vehicle_setting) const
 {
     //decide which derived BP to use
     std::string pawn_path = vehicle_setting.pawn_path;
@@ -110,24 +110,24 @@ std::string ASimModeWorldMultiRotor::getVehiclePawnPathName(const AirSimSettings
     return pawn_path;
 }
 
-PawnEvents* ASimModeWorldMultiRotor::getVehiclePawnEvents(APawn* pawn) const
+PawnEvents* ASimModeWorldMultiRotor::GetVehiclePawnEvents(APawn* pawn) const
 {
     return static_cast<AFlyingPawn*>(pawn)->GetPawnEvents();
 }
 
-const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeWorldMultiRotor::getVehiclePawnCameras(
+const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeWorldMultiRotor::GetVehiclePawnCameras(
     APawn* pawn) const
 {
     return (static_cast<const AFlyingPawn*>(pawn))->GetCameras();
 }
 
-void ASimModeWorldMultiRotor::initializeVehiclePawn(APawn* pawn)
+void ASimModeWorldMultiRotor::InitializeVehiclePawn(APawn* pawn)
 {
 	unused(pawn);
     //static_cast<TVehiclePawn*>(pawn)->initializeForBeginPlay();
 }
 
-std::unique_ptr<PawnSimApi> ASimModeWorldMultiRotor::createVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const
+std::unique_ptr<PawnSimApi> ASimModeWorldMultiRotor::CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const
 {
     std::unique_ptr<PawnSimApi> vehicle_sim_api = std::make_unique<MultirotorPawnSimApi>(pawn_sim_api_params);
     vehicle_sim_api->initialize();
@@ -138,9 +138,9 @@ std::unique_ptr<PawnSimApi> ASimModeWorldMultiRotor::createVehicleSimApi(const P
     return vehicle_sim_api;
 }
 
-msr::airlib::VehicleApiBase* ASimModeWorldMultiRotor::getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
+msr::airlib::VehicleApiBase* ASimModeWorldMultiRotor::GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
     const PawnSimApi* sim_api) const
 {
-    const auto multirotor_sim_api = static_cast<const MultirotorPawnSimApi*>(sim_api);
+    const MultirotorPawnSimApi* multirotor_sim_api = static_cast<const MultirotorPawnSimApi*>(sim_api);
     return multirotor_sim_api->getVehicleApi();
 }

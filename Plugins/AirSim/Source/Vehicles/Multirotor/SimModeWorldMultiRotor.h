@@ -20,23 +20,23 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected: //overrides
-    virtual void setupClockSpeed() override;
+    virtual void SetupClockSpeed() override;
 	
-    virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const override;
+    virtual std::unique_ptr<msr::airlib::ApiServerBase> CreateApiServer() const override;
 	
-    virtual void getExistingVehiclePawns(TArray<AActor*>& pawns) const override;
+    virtual void GetExistingVehiclePawns(TArray<AActor*>& pawns) const override;
 	
-    virtual bool isVehicleTypeSupported(const std::string& vehicle_type) const override;
+    virtual bool IsVehicleTypeSupported(const std::string& vehicle_type) const override;
 	
-    virtual std::string getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const override;
+    virtual std::string GetVehiclePawnPath(const AirSimSettings::VehicleSetting& vehicle_setting) const override;
 	
-    virtual PawnEvents* getVehiclePawnEvents(APawn* pawn) const override;
+    virtual PawnEvents* GetVehiclePawnEvents(APawn* pawn) const override;
 	
-    virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> getVehiclePawnCameras(APawn* pawn) const override;
+    virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> GetVehiclePawnCameras(APawn* pawn) const override;
 	
-    virtual void initializeVehiclePawn(APawn* pawn) override;
+    virtual void InitializeVehiclePawn(APawn* pawn) override;
 	
-    virtual std::unique_ptr<PawnSimApi> createVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const override;
+    virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const override;
 	
-    virtual msr::airlib::VehicleApiBase* getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params, const PawnSimApi* sim_api) const override;
+    virtual msr::airlib::VehicleApiBase* GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params, const PawnSimApi* sim_api) const override;
 };

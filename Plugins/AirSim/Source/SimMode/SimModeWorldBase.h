@@ -39,7 +39,7 @@ protected:
     void stopAsyncUpdator();
     virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter) override;
 
-    //should be called by derived class once all api_provider_ is ready to use
+    //should be called by derived class once all ApiProvider is ready to use
     void initializeForPlay();
 
     //used for adding physics bodies on the fly

@@ -67,7 +67,7 @@ bool WorldSimApi::destroyObject(const std::string& object_name)
             result = actor->IsPendingKill();
         }
         if (result)
-            simmode_->scene_object_map.Remove(FString(object_name.c_str()));
+            simmode_->SceneObjectMap.Remove(FString(object_name.c_str()));
 
         GEngine->ForceGarbageCollection(true);
     }, true);
@@ -77,12 +77,12 @@ bool WorldSimApi::destroyObject(const std::string& object_name)
 std::string WorldSimApi::spawnObject(std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose, const WorldSimApi::Vector3r& scale, bool physics_enabled)
 {
     // Create struct for Location and Rotation of actor in Unreal
-    FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
+    FTransform actor_transform = simmode_->GetGlobalNedTransform().fromGlobalNed(pose);
 
     bool found_object = false, spawned_object = false;
     UAirBlueprintLib::RunCommandOnGameThread([this, load_object, &object_name, &actor_transform, &found_object, &spawned_object, &scale, &physics_enabled]() {
             FString asset_name = FString(load_object.c_str());
-            FAssetData *LoadAsset = simmode_->asset_map.Find(asset_name);
+            FAssetData *LoadAsset = simmode_->AssetMap.Find(asset_name);
             
             if (LoadAsset)
             {
@@ -111,7 +111,7 @@ std::string WorldSimApi::spawnObject(std::string& object_name, const std::string
                 if (NewActor)
                 {
                     spawned_object = true;
-                    simmode_->scene_object_map.Add(FString(object_name.c_str()), NewActor);
+                    simmode_->SceneObjectMap.Add(FString(object_name.c_str()), NewActor);
                 }
 
                 UAirBlueprintLib::setSimulatePhysics(NewActor, physics_enabled);
@@ -167,7 +167,7 @@ bool WorldSimApi::createVoxelGrid(const Vector3r& position, const int& x_size, c
     params.bFindInitialOverlaps = true;
     params.bTraceComplex = false;
     params.TraceTag = "";
-    auto position_in_UE_frame = simmode_->getGlobalNedTransform().fromGlobalNed(position);
+    auto position_in_UE_frame = simmode_->GetGlobalNedTransform().fromGlobalNed(position);
     for (float i = 0; i < ncells_x; i++) {
         for (float k = 0; k < ncells_z; k++) {
             for (float j = 0; j < ncells_y; j++) {
@@ -264,7 +264,7 @@ bool WorldSimApi::addVehicle(const std::string& vehicle_name, const std::string&
 {
     bool result;
     UAirBlueprintLib::RunCommandOnGameThread([&]() {
-        result = simmode_->createVehicleAtRuntime(vehicle_name, vehicle_type, pose, pawn_path);
+        result = simmode_->SpawnVehicleAtRuntime(vehicle_name, vehicle_type, pose, pawn_path);
     }, true);
 		
     return result;
@@ -318,8 +318,8 @@ WorldSimApi::Pose WorldSimApi::getObjectPose(const std::string& object_name) con
     Pose result;
     UAirBlueprintLib::RunCommandOnGameThread([this, &object_name, &result]() {
         // AActor* actor = UAirBlueprintLib::FindActor<AActor>(simmode_, FString(object_name.c_str()));
-        AActor* actor = simmode_->scene_object_map.FindRef(FString(object_name.c_str()));
-        result = actor ? simmode_->getGlobalNedTransform().toGlobalNed(FTransform(actor->GetActorRotation(), actor->GetActorLocation()))
+        AActor* actor = simmode_->SceneObjectMap.FindRef(FString(object_name.c_str()));
+        result = actor ? simmode_->GetGlobalNedTransform().toGlobalNed(FTransform(actor->GetActorRotation(), actor->GetActorLocation()))
             : Pose::nanPose();
     }, true);
 
@@ -331,7 +331,7 @@ WorldSimApi::Vector3r WorldSimApi::getObjectScale(const std::string& object_name
     Vector3r result;
     UAirBlueprintLib::RunCommandOnGameThread([this, &object_name, &result]() {
         // AActor* actor = UAirBlueprintLib::FindActor<AActor>(simmode_, FString(object_name.c_str()));
-        AActor* actor = simmode_->scene_object_map.FindRef(FString(object_name.c_str()));
+        AActor* actor = simmode_->SceneObjectMap.FindRef(FString(object_name.c_str()));
         result = actor ? Vector3r(actor->GetActorScale().X, actor->GetActorScale().Y, actor->GetActorScale().Z)
             : Vector3r::Zero();
     }, true);
@@ -342,9 +342,9 @@ bool WorldSimApi::setObjectPose(const std::string& object_name, const WorldSimAp
 {
     bool result;
     UAirBlueprintLib::RunCommandOnGameThread([this, &object_name, &pose, teleport, &result]() {
-        FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
+        FTransform actor_transform = simmode_->GetGlobalNedTransform().fromGlobalNed(pose);
         // AActor* actor = UAirBlueprintLib::FindActor<AActor>(simmode_, FString(object_name.c_str()));
-        AActor* actor = simmode_->scene_object_map.FindRef(FString(object_name.c_str()));
+        AActor* actor = simmode_->SceneObjectMap.FindRef(FString(object_name.c_str()));
         if (actor) {
             if (teleport) 
                 result = actor->SetActorLocationAndRotation(actor_transform.GetLocation(), actor_transform.GetRotation(), false, nullptr, ETeleportType::TeleportPhysics);
@@ -362,7 +362,7 @@ bool WorldSimApi::setObjectScale(const std::string& object_name, const Vector3r&
     bool result;
     UAirBlueprintLib::RunCommandOnGameThread([this, &object_name, &scale, &result]() {
         // AActor* actor = UAirBlueprintLib::FindActor<AActor>(simmode_, FString(object_name.c_str()));
-        AActor* actor = simmode_->scene_object_map.FindRef(FString(object_name.c_str()));
+        AActor* actor = simmode_->SceneObjectMap.FindRef(FString(object_name.c_str()));
         if (actor) {
             actor->SetActorScale3D(FVector(scale[0], scale[1], scale[2]));
             result = true;
@@ -439,7 +439,7 @@ void WorldSimApi::simPlotPoints(const std::vector<Vector3r>& points, const std::
     UAirBlueprintLib::RunCommandOnGameThread([this, &points, &color, size, duration, is_persistent]() {
         for (const auto& point : points) {
             DrawDebugPoint(simmode_->GetWorld(),
-                    simmode_->getGlobalNedTransform().fromGlobalNed(point),
+                    simmode_->GetGlobalNedTransform().fromGlobalNed(point),
                     size, color, is_persistent, duration);
         }
     }, true);
@@ -453,8 +453,8 @@ void WorldSimApi::simPlotLineStrip(const std::vector<Vector3r>& points, const st
     UAirBlueprintLib::RunCommandOnGameThread([this, &points, &color, thickness, duration, is_persistent]() {
         for (size_t idx = 0; idx != points.size()-1; ++idx) {
             DrawDebugLine(simmode_->GetWorld(), 
-                simmode_->getGlobalNedTransform().fromGlobalNed(points[idx]), 
-                simmode_->getGlobalNedTransform().fromGlobalNed(points[idx+1]), 
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points[idx]), 
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points[idx+1]), 
                 color, is_persistent, duration, 0, thickness);
         }
     }, true);
@@ -468,8 +468,8 @@ void WorldSimApi::simPlotLineList(const std::vector<Vector3r>& points, const std
     UAirBlueprintLib::RunCommandOnGameThread([this, &points, &color, thickness, duration, is_persistent]() {
         for (int idx = 0; idx < points.size()-1; idx += 2) {
             DrawDebugLine(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(points[idx]),
-                simmode_->getGlobalNedTransform().fromGlobalNed(points[idx+1]),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points[idx]),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points[idx+1]),
                 color, is_persistent, duration, 0, thickness);
         }
     }, true);
@@ -483,8 +483,8 @@ void WorldSimApi::simPlotArrows(const std::vector<Vector3r>& points_start, const
     UAirBlueprintLib::RunCommandOnGameThread([this, &points_start, &points_end, &color, thickness, arrow_size, duration, is_persistent]() {
         for (int idx = 0; idx < points_start.size(); ++idx) {
             DrawDebugDirectionalArrow(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(points_start[idx]),
-                simmode_->getGlobalNedTransform().fromGlobalNed(points_end[idx]),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points_start[idx]),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(points_end[idx]),
                 arrow_size, color, is_persistent, duration, 0, thickness);
         }
     }, true);
@@ -498,7 +498,7 @@ void WorldSimApi::simPlotStrings(const std::vector<std::string>& strings, const 
     UAirBlueprintLib::RunCommandOnGameThread([this, &strings, &positions, &color, scale, duration]() {
         for (int idx = 0; idx < positions.size(); ++idx) {
             DrawDebugString(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(positions[idx]),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(positions[idx]),
                 FString(strings[idx].c_str()),
                 NULL, color, duration, false, scale);
         }
@@ -510,8 +510,8 @@ void WorldSimApi::simPlotTransforms(const std::vector<Pose>& poses, float scale,
     UAirBlueprintLib::RunCommandOnGameThread([this, &poses, scale, thickness, duration, is_persistent]() {
         for (const auto& pose : poses) {
             DrawDebugCoordinateSystem(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(pose.position),
-                simmode_->getGlobalNedTransform().fromNed(pose.orientation).Rotator(),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(pose.position),
+                simmode_->GetGlobalNedTransform().fromNed(pose.orientation).Rotator(),
                 scale, is_persistent, duration, 0, thickness);
         }
     }, true);
@@ -525,11 +525,11 @@ void WorldSimApi::simPlotTransformsWithNames(const std::vector<Pose>& poses, con
     UAirBlueprintLib::RunCommandOnGameThread([this, &poses, &names, &color, tf_scale, tf_thickness, text_scale, duration]() {
         for (int idx = 0; idx < poses.size(); ++idx) {
             DrawDebugCoordinateSystem(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(poses[idx].position),
-                simmode_->getGlobalNedTransform().fromNed(poses[idx].orientation).Rotator(),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(poses[idx].position),
+                simmode_->GetGlobalNedTransform().fromNed(poses[idx].orientation).Rotator(),
                 tf_scale, false, duration, 0, tf_thickness);
             DrawDebugString(simmode_->GetWorld(),
-                simmode_->getGlobalNedTransform().fromGlobalNed(poses[idx]).GetLocation(),
+                simmode_->GetGlobalNedTransform().fromGlobalNed(poses[idx]).GetLocation(),
                 FString(names[idx].c_str()), NULL, color, duration, false, text_scale);
         }
     }, true);
@@ -559,7 +559,6 @@ bool WorldSimApi::isRecording() const
 {
     return simmode_->IsRecording();
 }
-
 
 void WorldSimApi::setWind(const Vector3r& wind) const
 {

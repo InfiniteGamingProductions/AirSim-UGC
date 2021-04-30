@@ -85,7 +85,7 @@ public:
     UFUNCTION(BlueprintPure, Category = "AirSim|LevelAPI")
     static TArray<FName> ListWorldsInRegistry();
     static UObject* GetMeshFromRegistry(const std::string& load_object);
-    static void GenerateAssetRegistryMap(const UObject* context, TMap<FString, FAssetData>& asset_map);
+    static void GenerateAssetRegistryMap(const UObject* context, TMap<FString, FAssetData>& OutAssetMap);
     static void GenerateActorMap(const UObject* context, TMap<FString, AActor*>& scene_object_map);
 
     UFUNCTION(BlueprintCallable, Category = "AirSim")
