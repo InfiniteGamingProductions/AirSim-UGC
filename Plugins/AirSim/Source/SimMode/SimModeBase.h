@@ -19,57 +19,116 @@
 UCLASS()
 class AIRSIM_API ASimModeBase : public AActor
 {
-public:
 
     GENERATED_BODY()
+
+public:
+	/** Returns a reference to the initilized SimMode from a singleton format */
+	UFUNCTION(BlueprintPure, Category = "Airsim")
+	static ASimModeBase* GetSimMode();
+
+	ASimModeBase();
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	/** Resets the SimMode */
+    UFUNCTION(BlueprintCallable, Category = "Airsim")
+    virtual void Reset();
+
+	/**
+	* Used to set the Wind Direction and Magnitude
+	*/
+	virtual void SetWind(const msr::airlib::Vector3r& wind) const;
+
+	// Pause Functions
+	/**
+	* Called to determine if the simulation is paused or not 
+	* @return If the simulation is paused or not
+	*/
+	virtual bool IsSimulationPaused() const;
+
+	/**
+	* Called to pause or unpause the simulation
+	* @param Pause - true if you want to pause the sim, false if you want to resume
+	*/
+	virtual void PauseSimulation(bool Pause);
+
+	/**
+	* Called by WorldSimAPI to unpause for seconds and then pause again
+	* @param Seconds - The time in seconds to continue
+	* @warning Depending on implementation this halts the game thread!
+	*/
+	virtual void ContinueForTime(double Seconds);
+
+	/**
+	* Called by WorldSimAPI to unpause for a number of frames and then pause again
+	* @param Frames - The number of Frames to continue
+	* @warning Depending on implementation this halts the game thread!
+	*/
+	virtual void ContinueForFrames(uint32_t Frames);
+
+	// Recording Functions
+	/**
+	* Toggles frame recording
+	* @return returns if recording is enabled or not
+	*/
+    UFUNCTION(BlueprintCallable, Category = "Airsim")
+    bool ToggleRecording();
+
+	/** Tells Recording Thread to Start Recording */
+    virtual void StartRecording();
+
+	/** Tells Recording Thread to Stop Recording */
+    virtual void StopRecording();
+
+	/** Checks if Recording Thread is recording */
+    virtual bool IsRecording() const;
+
+	// Debug Functions
+    /**
+	* Returns a Debug Report that is shown on the HUD
+	* @return A Debug Report
+	*/
+    virtual std::string GetDebugReport();
+
+	//TODO: Fillout Paramater Deffenitions
+	/**
+	* Sets the Time of Day in UE4
+	* @param is_enabled
+	* @param start_datetime
+	* @param is_start_datetime_dst
+	* @param celestial_clock_speed
+	* @param update_intercal_secs
+	* @param move_sun
+	*/
+    virtual void SetTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
+        float celestial_clock_speed, float update_interval_secs, bool move_sun);
+
+	// API Functions
+	/** Starts API Server */
+    void StartApiServer();
+
+	/** Kills API Server */
+    void StopApiServer();
+
+	/** Returns true if Api Server is running */
+    bool IsApiServerStarted();
+
+protected:
+	virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const;
+
+public:
+    bool createVehicleAtRuntime(const std::string& vehicle_name, const std::string& vehicle_type,
+        const msr::airlib::Pose& pose, const std::string& pawn_path = "");
+
+    const NedTransform& getGlobalNedTransform();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Refs")
     ACameraDirector* CameraDirector;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debugging")
     bool EnableReport = false;
-
-    UFUNCTION(BlueprintCallable, Category = "Recording")
-    bool toggleRecording();
-
-    UFUNCTION(BlueprintPure, Category = "Airsim | get stuff")
-    static ASimModeBase* getSimMode();
-
-    UFUNCTION(BlueprintCallable, Category = "Airsim | get stuff")
-    virtual void reset();
-
-    // Sets default values for this actor's properties
-    ASimModeBase();
-    virtual void BeginPlay() override;
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick( float DeltaSeconds ) override;
-
-    //additional overridable methods
-    virtual std::string getDebugReport();
-    virtual ECameraDirectorMode getInitialViewMode() const;
-
-    virtual bool isPaused() const;
-    virtual void pause(bool is_paused);
-    virtual void continueForTime(double seconds);
-    virtual void continueForFrames(uint32_t frames);
-
-    virtual void setWind(const msr::airlib::Vector3r& wind) const;
-
-    virtual void setTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
-        float celestial_clock_speed, float update_interval_secs, bool move_sun);
-
-    virtual void startRecording();
-    virtual void stopRecording();
-    virtual bool isRecording() const;
-
-    void startApiServer();
-    void stopApiServer();
-    bool isApiServerStarted();
-
-    bool createVehicleAtRuntime(const std::string& vehicle_name, const std::string& vehicle_type,
-        const msr::airlib::Pose& pose, const std::string& pawn_path = "");
-
-    const NedTransform& getGlobalNedTransform();
 
     msr::airlib::ApiProvider* getApiProvider() const
     {
@@ -90,7 +149,7 @@ public:
 protected: //must overrides
     typedef msr::airlib::AirSimSettings AirSimSettings;
 
-    virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const;
+    
     virtual void getExistingVehiclePawns(TArray<AActor*>& pawns) const;
     virtual bool isVehicleTypeSupported(const std::string& vehicle_type) const;
     virtual std::string getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const;
@@ -113,6 +172,12 @@ protected: //optional overrides
     void initializeCameraDirector(const FTransform& camera_transform, float follow_distance);
     void checkVehicleReady(); //checks if vehicle is available to use
     virtual void updateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
+
+	/**
+	* Used to get the first View Mode for the camera director
+	* @return Returns the camera mode that should be used
+	*/
+	virtual ECameraDirectorMode GetInitialViewMode() const;
 
 protected: //Utility methods for derived classes
     virtual const msr::airlib::AirSimSettings& getSettings() const;

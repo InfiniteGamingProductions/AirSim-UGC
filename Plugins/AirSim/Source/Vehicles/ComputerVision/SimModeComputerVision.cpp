@@ -77,12 +77,12 @@ msr::airlib::VehicleApiBase* ASimModeComputerVision::getVehicleApi(const PawnSim
     return nullptr;
 }
 
-bool ASimModeComputerVision::isPaused() const
+bool ASimModeComputerVision::IsSimulationPaused() const
 {
     return UGameplayStatics::IsGamePaused(this->GetWorld());
 }
 
-void ASimModeComputerVision::pause(bool is_paused)
+void ASimModeComputerVision::PauseSimulation(bool is_paused)
 {
     UGameplayStatics::SetGamePaused(this->GetWorld(), is_paused);
 }

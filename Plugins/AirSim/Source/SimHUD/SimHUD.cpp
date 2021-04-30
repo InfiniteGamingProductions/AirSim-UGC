@@ -36,7 +36,7 @@ void ASimHUD::BeginPlay()
         SetupInputBindings();
 
         if (SimMode)
-            SimMode->startApiServer();
+            SimMode->StartApiServer();
     }
     catch (std::exception& ex) {
         UAirBlueprintLib::LogMessageString("Error at startup: ", ex.what(), LogDebugLevel::Failure);
@@ -49,13 +49,13 @@ void ASimHUD::BeginPlay()
 void ASimHUD::Tick(float DeltaSeconds)
 {
     if (SimMode && SimMode->EnableReport)
-        HUDWidget->updateDebugReport(SimMode->getDebugReport());
+        HUDWidget->updateDebugReport(SimMode->GetDebugReport());
 }
 
 void ASimHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (SimMode)
-        SimMode->stopApiServer();
+        SimMode->StopApiServer();
 
     if (HUDWidget) {
         HUDWidget->Destruct();
@@ -287,7 +287,7 @@ void ASimHUD::OnPause()
 
 void ASimHUD::ToggleRecordHandler()
 {
-	SimMode->toggleRecording();
+	SimMode->ToggleRecording();
 }
 
 

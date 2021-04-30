@@ -24,15 +24,15 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick( float DeltaSeconds ) override;
 
-    virtual void reset() override;
-    virtual std::string getDebugReport() override;
+    virtual void Reset() override;
+    virtual std::string GetDebugReport() override;
 
-    virtual bool isPaused() const override;
-    virtual void pause(bool is_paused) override;
-    virtual void continueForTime(double seconds) override;
-    virtual void continueForFrames(uint32_t frames) override;
+    virtual bool IsSimulationPaused() const override;
+    virtual void PauseSimulation(bool is_paused) override;
+    virtual void ContinueForTime(double seconds) override;
+    virtual void ContinueForFrames(uint32_t frames) override;
 
-    virtual void setWind(const msr::airlib::Vector3r& wind) const override;
+    virtual void SetWind(const msr::airlib::Vector3r& wind) const override;
 
 protected:
     void startAsyncUpdator();

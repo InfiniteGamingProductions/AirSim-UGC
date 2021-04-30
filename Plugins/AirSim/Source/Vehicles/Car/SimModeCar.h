@@ -18,10 +18,10 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
 
-    virtual bool isPaused() const override;
-    virtual void pause(bool is_paused) override;
-    virtual void continueForTime(double seconds) override;
-    virtual void continueForFrames(uint32_t frames) override;
+    virtual bool IsSimulationPaused() const override;
+    virtual void PauseSimulation(bool is_paused) override;
+    virtual void ContinueForTime(double seconds) override;
+    virtual void ContinueForFrames(uint32_t frames) override;
 
 private:
     typedef msr::airlib::ClockFactory ClockFactory;

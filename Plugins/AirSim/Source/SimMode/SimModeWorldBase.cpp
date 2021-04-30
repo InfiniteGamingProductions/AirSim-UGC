@@ -79,18 +79,18 @@ std::unique_ptr<ASimModeWorldBase::PhysicsEngineBase> ASimModeWorldBase::createP
     return physics_engine;
 }
 
-bool ASimModeWorldBase::isPaused() const
+bool ASimModeWorldBase::IsSimulationPaused() const
 {
     return physics_world_->isPaused();
 }
 
-void ASimModeWorldBase::pause(bool is_paused)
+void ASimModeWorldBase::PauseSimulation(bool is_paused)
 {
     physics_world_->pause(is_paused);
     UGameplayStatics::SetGamePaused(this->GetWorld(), is_paused);
 }
 
-void ASimModeWorldBase::continueForTime(double seconds)
+void ASimModeWorldBase::ContinueForTime(double seconds)
 {
     if(physics_world_->isPaused())
     {
@@ -98,6 +98,7 @@ void ASimModeWorldBase::continueForTime(double seconds)
         UGameplayStatics::SetGamePaused(this->GetWorld(), false);        
     }
 
+	//Wouldn't this halt game thread for seconds!!! thats not good
     physics_world_->continueForTime(seconds);
     while(!physics_world_->isPaused())
     {
@@ -106,7 +107,7 @@ void ASimModeWorldBase::continueForTime(double seconds)
     UGameplayStatics::SetGamePaused(this->GetWorld(), true);
 }
 
-void ASimModeWorldBase::continueForFrames(uint32_t frames)
+void ASimModeWorldBase::ContinueForFrames(uint32_t frames)
 {
     if(physics_world_->isPaused())
     {
@@ -123,7 +124,7 @@ void ASimModeWorldBase::continueForFrames(uint32_t frames)
     UGameplayStatics::SetGamePaused(this->GetWorld(), true);
 }
 
-void ASimModeWorldBase::setWind(const msr::airlib::Vector3r& wind) const
+void ASimModeWorldBase::SetWind(const msr::airlib::Vector3r& wind) const
 {
     physics_engine_->setWind(wind);
 }
@@ -155,7 +156,7 @@ void ASimModeWorldBase::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
 }
 
-void ASimModeWorldBase::reset()
+void ASimModeWorldBase::Reset()
 {
     UAirBlueprintLib::RunCommandOnGameThread([this]() {
         physics_world_->reset();
@@ -164,7 +165,7 @@ void ASimModeWorldBase::reset()
     //no need to call base reset because of our custom implementation
 }
 
-std::string ASimModeWorldBase::getDebugReport()
+std::string ASimModeWorldBase::GetDebugReport()
 {
     return physics_world_->getDebugReport();
 }

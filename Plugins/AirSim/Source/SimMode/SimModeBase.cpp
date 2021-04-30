@@ -34,7 +34,7 @@
 
 ASimModeBase *ASimModeBase::SIMMODE = nullptr;
 
-ASimModeBase* ASimModeBase::getSimMode()
+ASimModeBase* ASimModeBase::GetSimMode()
 {
     return SIMMODE;
 }
@@ -114,7 +114,7 @@ void ASimModeBase::BeginPlay()
 
     initializeTimeOfDay();
     AirSimSettings::TimeOfDaySetting tod_setting = getSettings().tod_setting;
-    setTimeOfDay(tod_setting.enabled, tod_setting.start_datetime, tod_setting.is_start_datetime_dst,
+    SetTimeOfDay(tod_setting.enabled, tod_setting.start_datetime, tod_setting.is_start_datetime_dst,
         tod_setting.celestial_clock_speed, tod_setting.update_interval_secs, tod_setting.move_sun);
 
     UAirBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
@@ -123,7 +123,7 @@ void ASimModeBase::BeginPlay()
     FRecordingThread::init();
 
     if (getSettings().recording_setting.enabled)
-        startRecording();
+        StartRecording();
 
     UWorld* World = GetWorld();
     if (World)
@@ -215,7 +215,7 @@ void ASimModeBase::initializeTimeOfDay()
     }
 }
 
-void ASimModeBase::setTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
+void ASimModeBase::SetTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
     float celestial_clock_speed, float update_interval_secs, bool move_sun)
 {
     bool enabled_currently = tod_enabled_;
@@ -256,38 +256,38 @@ void ASimModeBase::setTimeOfDay(bool is_enabled, const std::string& start_dateti
     tod_move_sun_ = move_sun;
 }
 
-bool ASimModeBase::isPaused() const
+bool ASimModeBase::IsSimulationPaused() const
 {
     return UGameplayStatics::IsGamePaused(this);
 	//return false;
 }
 
-void ASimModeBase::pause(bool is_paused)
+void ASimModeBase::PauseSimulation(bool is_paused)
 {
     //should be overridden by derived class
     unused(is_paused);
     throw std::domain_error("Pause is not implemented by SimMode");
 }
 
-void ASimModeBase::continueForTime(double seconds)
+void ASimModeBase::ContinueForTime(double seconds)
 {
     //should be overridden by derived class
     unused(seconds);
-    throw std::domain_error("continueForTime is not implemented by SimMode");
+    throw std::domain_error("ContinueForTime is not implemented by SimMode");
 }
 
-void ASimModeBase::continueForFrames(uint32_t frames)
+void ASimModeBase::ContinueForFrames(uint32_t frames)
 {
     //should be overriden by derived class
     unused(frames);
-    throw std::domain_error("continueForFrames is not implemented by SimMode");
+    throw std::domain_error("ContinueForFrames is not implemented by SimMode");
 }
 
-void ASimModeBase::setWind(const msr::airlib::Vector3r& wind) const
+void ASimModeBase::SetWind(const msr::airlib::Vector3r& wind) const
 {
     // should be overridden by derived class
     unused(wind);
-    throw std::domain_error("setWind not implemented by SimMode");
+    throw std::domain_error("SetWind not implemented by SimMode");
 }
 
 std::unique_ptr<msr::airlib::ApiServerBase> ASimModeBase::createApiServer() const
@@ -321,7 +321,7 @@ void ASimModeBase::setupPhysicsLoopPeriod()
 
 void ASimModeBase::Tick(float DeltaSeconds)
 {
-    if (isRecording())
+    if (IsRecording())
         ++record_tick_count;
 
     advanceTimeOfDay();
@@ -381,7 +381,7 @@ void ASimModeBase::setSunRotation(FRotator rotation)
     }
 }
 
-void ASimModeBase::reset()
+void ASimModeBase::Reset()
 {
     //default implementation
     UAirBlueprintLib::RunCommandOnGameThread([this]() {
@@ -391,7 +391,7 @@ void ASimModeBase::reset()
     }, true);
 }
 
-std::string ASimModeBase::getDebugReport()
+std::string ASimModeBase::GetDebugReport()
 {
     return debug_reporter_.getOutput();
 }
@@ -403,11 +403,11 @@ void ASimModeBase::setupInputBindings()
 	APlayerController* controller = GetWorld()->GetFirstPlayerController();
 	if (controller)
 	{
-		controller->InputComponent->BindAction("ResetAll", IE_Pressed, this, &ASimModeBase::reset);
+		controller->InputComponent->BindAction("ResetAll", IE_Pressed, this, &ASimModeBase::Reset);
 	}
 }
 
-ECameraDirectorMode ASimModeBase::getInitialViewMode() const
+ECameraDirectorMode ASimModeBase::GetInitialViewMode() const
 {
     return Utils::toEnum<ECameraDirectorMode>(getSettings().initial_view_mode);
 }
@@ -440,33 +440,33 @@ void ASimModeBase::initializeCameraDirector(const FTransform& camera_transform, 
     }
 }
 
-bool ASimModeBase::toggleRecording()
+bool ASimModeBase::ToggleRecording()
 {
-    if (isRecording())
-        stopRecording();
+    if (IsRecording())
+        StopRecording();
     else
-        startRecording();
+        StartRecording();
 
-    return isRecording();
+    return IsRecording();
 }
 
-void ASimModeBase::stopRecording()
+void ASimModeBase::StopRecording()
 {
     FRecordingThread::stopRecording();
 }
 
-void ASimModeBase::startRecording()
+void ASimModeBase::StartRecording()
 {
     FRecordingThread::startRecording(getSettings().recording_setting, getApiProvider()->getVehicleSimApis());
 }
 
-bool ASimModeBase::isRecording() const
+bool ASimModeBase::IsRecording() const
 {
     return FRecordingThread::isRecording();
 }
 
 //API server start/stop
-void ASimModeBase::startApiServer()
+void ASimModeBase::StartApiServer()
 {
     if (getSettings().enable_rpc) {
 
@@ -487,14 +487,14 @@ void ASimModeBase::startApiServer()
         UAirBlueprintLib::LogMessageString("API server is disabled in settings", "", LogDebugLevel::Informational);
 
 }
-void ASimModeBase::stopApiServer()
+void ASimModeBase::StopApiServer()
 {
     if (api_server_ != nullptr) {
         api_server_->stop();
         api_server_.reset(nullptr);
     }
 }
-bool ASimModeBase::isApiServerStarted()
+bool ASimModeBase::IsApiServerStarted()
 {
     return api_server_ != nullptr;
 }
@@ -694,11 +694,11 @@ void ASimModeBase::setupVehiclesAndCamera()
     if (getApiProvider()->hasDefaultVehicle()) {
         //TODO: better handle no FPV vehicles scenario
         getVehicleSimApi()->possess();
-        CameraDirector->initializeForBeginPlay(getInitialViewMode(), getVehicleSimApi()->getPawn(),
+        CameraDirector->initializeForBeginPlay(GetInitialViewMode(), getVehicleSimApi()->getPawn(),
             getVehicleSimApi()->getCamera("fpv"), getVehicleSimApi()->getCamera("back_center"), nullptr);
     }
     else
-        CameraDirector->initializeForBeginPlay(getInitialViewMode(), nullptr, nullptr, nullptr, nullptr);
+        CameraDirector->initializeForBeginPlay(GetInitialViewMode(), nullptr, nullptr, nullptr, nullptr);
 
     checkVehicleReady();
 }

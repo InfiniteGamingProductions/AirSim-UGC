@@ -30,6 +30,6 @@ protected:
         const PawnSimApi::Params& pawn_sim_api_params) const override;
     virtual msr::airlib::VehicleApiBase* getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
         const PawnSimApi* sim_api) const override;
-    virtual bool isPaused() const override;
-    virtual void pause(bool is_paused) override;
+    virtual bool IsSimulationPaused() const override;
+    virtual void PauseSimulation(bool is_paused) override;
 };

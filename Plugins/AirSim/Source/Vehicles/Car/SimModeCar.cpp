@@ -22,15 +22,15 @@ void ASimModeCar::initializePauseState()
 {
     pause_period_ = 0;
     pause_period_start_ = 0;
-    pause(false);
+    PauseSimulation(false);
 }
 
-bool ASimModeCar::isPaused() const
+bool ASimModeCar::IsSimulationPaused() const
 {
     return current_clockspeed_ == 0;
 }
 
-void ASimModeCar::pause(bool is_paused)
+void ASimModeCar::PauseSimulation(bool is_paused)
 {
     if (is_paused)
         current_clockspeed_ = 0;
@@ -40,18 +40,18 @@ void ASimModeCar::pause(bool is_paused)
     UAirBlueprintLib::setUnrealClockSpeed(this, current_clockspeed_);
 }
 
-void ASimModeCar::continueForTime(double seconds)
+void ASimModeCar::ContinueForTime(double seconds)
 {
     pause_period_start_ = ClockFactory::get()->nowNanos();
     pause_period_ = seconds;
-    pause(false);
+    PauseSimulation(false);
 }
 
-void ASimModeCar::continueForFrames(uint32_t frames)
+void ASimModeCar::ContinueForFrames(uint32_t frames)
 {
     targetFrameNumber_ = GFrameNumber + frames;
     frame_countdown_enabled_ = true;
-    pause(false);
+    PauseSimulation(false);
 }
 
 void ASimModeCar::setupClockSpeed()
@@ -69,8 +69,8 @@ void ASimModeCar::Tick(float DeltaSeconds)
     
     if (pause_period_start_ > 0) {
         if (ClockFactory::get()->elapsedSince(pause_period_start_) >= pause_period_) {
-            if (!isPaused())
-                pause(true);
+            if (!IsSimulationPaused())
+                PauseSimulation(true);
 
             pause_period_start_ = 0;
         }
@@ -78,8 +78,8 @@ void ASimModeCar::Tick(float DeltaSeconds)
 
     if(frame_countdown_enabled_){
         if (targetFrameNumber_ <= GFrameNumber){
-            if (! isPaused())
-                pause(true);
+            if (! IsSimulationPaused())
+                PauseSimulation(true);
 
             frame_countdown_enabled_ = false;
         }

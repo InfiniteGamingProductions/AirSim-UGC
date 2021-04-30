@@ -52,7 +52,7 @@ void WorldSimApi::spawnPlayer()
     else
     {
         std::this_thread::sleep_for(1s);
-        simmode_->reset();
+        simmode_->Reset();
     }
 }
 
@@ -228,35 +228,35 @@ bool WorldSimApi::createVoxelGrid(const Vector3r& position, const int& x_size, c
 
 bool WorldSimApi::isPaused() const
 {
-    return simmode_->isPaused();
+    return simmode_->IsSimulationPaused();
 }
 
 void WorldSimApi::reset()
 {
     UAirBlueprintLib::RunCommandOnGameThread([this]() {
-        simmode_->reset(); 
+        simmode_->Reset(); 
         }, true);
 }
 
 void WorldSimApi::pause(bool is_paused)
 {
-    simmode_->pause(is_paused);
+    simmode_->PauseSimulation(is_paused);
 }
 
 void WorldSimApi::continueForTime(double seconds)
 {
-    simmode_->continueForTime(seconds);
+    simmode_->ContinueForTime(seconds);
 }
 
 void WorldSimApi::continueForFrames(uint32_t frames)
 {
-    simmode_->continueForFrames(frames);
+    simmode_->ContinueForFrames(frames);
 }
 
 void WorldSimApi::setTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
     float celestial_clock_speed, float update_interval_secs, bool move_sun)
 {
-    simmode_->setTimeOfDay(is_enabled, start_datetime, is_start_datetime_dst,
+    simmode_->SetTimeOfDay(is_enabled, start_datetime, is_start_datetime_dst,
         celestial_clock_speed, update_interval_secs, move_sun);
 }
 
@@ -547,23 +547,23 @@ std::vector<WorldSimApi::MeshPositionVertexBuffersResponse> WorldSimApi::getMesh
 // Recording APIs
 void WorldSimApi::startRecording()
 {
-    simmode_->startRecording();
+    simmode_->StartRecording();
 }
 
 void WorldSimApi::stopRecording()
 {
-    simmode_->stopRecording();
+    simmode_->StopRecording();
 }
 
 bool WorldSimApi::isRecording() const
 {
-    return simmode_->isRecording();
+    return simmode_->IsRecording();
 }
 
 
 void WorldSimApi::setWind(const Vector3r& wind) const
 {
-    simmode_->setWind(wind);
+    simmode_->SetWind(wind);
 }
 
 std::string WorldSimApi::getSettingsString() const
