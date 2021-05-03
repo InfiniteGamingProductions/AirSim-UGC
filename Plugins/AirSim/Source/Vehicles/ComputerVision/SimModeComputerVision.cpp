@@ -29,7 +29,7 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeComputerVision::CreateApiSer
 
 void ASimModeComputerVision::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
-    UAirBlueprintLib::FindAllActor<TVehiclePawn>(this, pawns);
+    UAirBlueprintLib::FindAllActor<AComputerVisionPawn>(this, pawns);
 }
 
 bool ASimModeComputerVision::IsVehicleTypeSupported(const std::string& vehicle_type) const
@@ -49,16 +49,16 @@ std::string ASimModeComputerVision::GetVehiclePawnPath(const AirSimSettings::Veh
 
 PawnEvents* ASimModeComputerVision::GetVehiclePawnEvents(APawn* pawn) const
 {
-    return static_cast<TVehiclePawn*>(pawn)->getPawnEvents();
+    return static_cast<AComputerVisionPawn*>(pawn)->getPawnEvents();
 }
 const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeComputerVision::GetVehiclePawnCameras(
     APawn* pawn) const
 {
-    return static_cast<const TVehiclePawn*>(pawn)->getCameras();
+    return static_cast<const AComputerVisionPawn*>(pawn)->getCameras();
 }
 void ASimModeComputerVision::InitializeVehiclePawn(APawn* pawn)
 {
-    static_cast<TVehiclePawn*>(pawn)->initializeForBeginPlay();
+    static_cast<AComputerVisionPawn*>(pawn)->initializeForBeginPlay();
 }
 
 std::unique_ptr<PawnSimApi> ASimModeComputerVision::CreateVehicleSimApi(
@@ -68,14 +68,4 @@ std::unique_ptr<PawnSimApi> ASimModeComputerVision::CreateVehicleSimApi(
     vehicle_sim_api->initialize();
     vehicle_sim_api->reset();
     return vehicle_sim_api;
-}
-
-bool ASimModeComputerVision::IsSimulationPaused() const
-{
-    return UGameplayStatics::IsGamePaused(this->GetWorld());
-}
-
-void ASimModeComputerVision::PauseSimulation(bool is_paused)
-{
-    UGameplayStatics::SetGamePaused(this->GetWorld(), is_paused);
 }

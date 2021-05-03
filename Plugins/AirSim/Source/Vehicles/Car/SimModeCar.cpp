@@ -100,7 +100,7 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeCar::CreateApiServer() const
 
 void ASimModeCar::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
-    UAirBlueprintLib::FindAllActor<TVehiclePawn>(this, pawns);
+    UAirBlueprintLib::FindAllActor<ACarPawn>(this, pawns);
 }
 
 bool ASimModeCar::IsVehicleTypeSupported(const std::string& vehicle_type) const
@@ -121,22 +121,24 @@ std::string ASimModeCar::GetVehiclePawnPath(const AirSimSettings::VehicleSetting
 
 PawnEvents* ASimModeCar::GetVehiclePawnEvents(APawn* pawn) const
 {
-    return static_cast<TVehiclePawn*>(pawn)->getPawnEvents();
+    return static_cast<ACarPawn*>(pawn)->getPawnEvents();
 }
-const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeCar::GetVehiclePawnCameras(
-    APawn* pawn) const
+
+const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeCar::GetVehiclePawnCameras(APawn* pawn) const
 {
-    return (static_cast<const TVehiclePawn*>(pawn))->getCameras();
+    return (static_cast<const ACarPawn*>(pawn))->getCameras();
 }
+
 void ASimModeCar::InitializeVehiclePawn(APawn* pawn)
 {
-    auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn);
+    auto vehicle_pawn = static_cast<ACarPawn*>(pawn);
     vehicle_pawn->initializeForBeginPlay(GetSettings().engine_sound);
 }
+
 std::unique_ptr<PawnSimApi> ASimModeCar::CreateVehicleSimApi(
     const PawnSimApi::Params& pawn_sim_api_params) const
 {
-    auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn_sim_api_params.pawn);
+    auto vehicle_pawn = static_cast<ACarPawn*>(pawn_sim_api_params.pawn);
     auto vehicle_sim_api = std::unique_ptr<PawnSimApi>(new CarPawnSimApi(pawn_sim_api_params, 
         vehicle_pawn->getKeyBoardControls(), vehicle_pawn->getVehicleMovementComponent()));
     vehicle_sim_api->initialize();

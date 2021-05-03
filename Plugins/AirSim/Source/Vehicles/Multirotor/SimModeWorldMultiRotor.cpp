@@ -69,8 +69,6 @@ void ASimModeWorldMultiRotor::SetupClockSpeed()
             "clock_type %s is not recognized", clock_type.c_str()));
 }
 
-//-------------------------------- overrides -----------------------------------------------//
-
 std::unique_ptr<msr::airlib::ApiServerBase> ASimModeWorldMultiRotor::CreateApiServer() const
 {
 #ifdef AIRLIB_NO_RPC
@@ -113,12 +111,6 @@ const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeWorldMultiR
     APawn* pawn) const
 {
     return (static_cast<const AFlyingPawn*>(pawn))->GetCameras();
-}
-
-void ASimModeWorldMultiRotor::InitializeVehiclePawn(APawn* pawn)
-{
-	unused(pawn);
-    //static_cast<TVehiclePawn*>(pawn)->initializeForBeginPlay();
 }
 
 std::unique_ptr<PawnSimApi> ASimModeWorldMultiRotor::CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const

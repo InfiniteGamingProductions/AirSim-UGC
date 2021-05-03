@@ -597,4 +597,5 @@ std::string PawnSimApi::getRecordFileLine(bool is_header_line) const
 msr::airlib::VehicleApiBase* PawnSimApi::getVehicleApiBase() const
 {
     return nullptr;
+	//Derived class should override this
 }

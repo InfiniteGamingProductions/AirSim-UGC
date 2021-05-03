@@ -28,7 +28,6 @@ private:
     typedef common_utils::Utils Utils;
     typedef msr::airlib::TTimePoint TTimePoint;
     typedef msr::airlib::TTimeDelta TTimeDelta;
-    typedef ACarPawn TVehiclePawn;
     typedef msr::airlib::VehicleSimApiBase VehicleSimApiBase;
     typedef msr::airlib::VectorMath VectorMath;
     typedef msr::airlib::Vector3r Vector3r;

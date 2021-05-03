@@ -19,7 +19,7 @@ public:
 	
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-protected: //overrides
+protected:
     virtual void SetupClockSpeed() override;
 	
     virtual std::unique_ptr<msr::airlib::ApiServerBase> CreateApiServer() const override;
@@ -33,8 +33,6 @@ protected: //overrides
     virtual PawnEvents* GetVehiclePawnEvents(APawn* pawn) const override;
 	
     virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> GetVehiclePawnCameras(APawn* pawn) const override;
-	
-    virtual void InitializeVehiclePawn(APawn* pawn) override;
 	
     virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const override;
 };

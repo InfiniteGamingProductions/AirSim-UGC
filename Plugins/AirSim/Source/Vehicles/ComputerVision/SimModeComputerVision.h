@@ -15,9 +15,6 @@ class AIRSIM_API ASimModeComputerVision : public ASimModeBase
 {
     GENERATED_BODY()
 
-private:
-    typedef AComputerVisionPawn TVehiclePawn;
-
 protected:
     virtual std::unique_ptr<msr::airlib::ApiServerBase> CreateApiServer() const override;
     virtual void GetExistingVehiclePawns(TArray<AActor*>& pawns) const override;
@@ -26,8 +23,5 @@ protected:
     virtual PawnEvents* GetVehiclePawnEvents(APawn* pawn) const override;
     virtual const common_utils::UniqueValueMap<std::string, APIPCamera*> GetVehiclePawnCameras(APawn* pawn) const override;
     virtual void InitializeVehiclePawn(APawn* pawn) override;
-    virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(
-        const PawnSimApi::Params& pawn_sim_api_params) const override;
-    virtual bool IsSimulationPaused() const override;
-    virtual void PauseSimulation(bool is_paused) override;
+    virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const override;
 };
