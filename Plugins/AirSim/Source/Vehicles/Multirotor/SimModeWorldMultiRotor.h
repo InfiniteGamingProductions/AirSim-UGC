@@ -24,7 +24,7 @@ protected:
 	
     virtual std::unique_ptr<msr::airlib::ApiServerBase> CreateApiServer() const override;
 	
-    virtual void GetExistingVehiclePawns(TArray<AActor*>& pawns) const override;
+    virtual void GetExistingVehiclePawns(TArray<APawn*>& OutPawns) const override;
 	
     virtual bool IsVehicleTypeSupported(const std::string& vehicle_type) const override;
 	

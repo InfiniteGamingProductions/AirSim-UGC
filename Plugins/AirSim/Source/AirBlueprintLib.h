@@ -67,13 +67,6 @@ public:
         }
         return nullptr;
     }
-
-
-    template<typename T>
-    static void FindAllActor(const UObject* context, TArray<AActor*>& foundActors)
-    {
-        UGameplayStatics::GetAllActorsOfClass(context, T::StaticClass(), foundActors);
-    }
     
     static ULevelStreamingDynamic *CURRENT_LEVEL;
 

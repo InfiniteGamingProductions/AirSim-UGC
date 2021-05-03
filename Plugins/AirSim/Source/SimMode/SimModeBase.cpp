@@ -65,22 +65,28 @@ void ASimModeBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    debug_reporter_.initialize(false);
-    debug_reporter_.reset();
+	//initilize APIs
+	WorldSimApiRef.reset(new WorldSimApi(this));
+	ApiProviderRef.reset(new msr::airlib::ApiProvider(WorldSimApiRef.get()));
+	
+	//Setup Debug Reporter
+    debugReporter.initialize(false);
+    debugReporter.reset();
+
+	UAirBlueprintLib::setLogMessagesVisibility(GetSettings().log_messages_visible);
 
     //get player start
-    //this must be done from within actor otherwise we don't get player start
-    TArray<AActor*> pawns;
+	//get the vehicle pawn to get this
+    TArray<APawn*> pawns;
     GetExistingVehiclePawns(pawns);
     bool have_existing_pawns = pawns.Num() > 0;
-    AActor* fpv_pawn = nullptr;
+    APawn* fpv_pawn = nullptr;
     
     if (have_existing_pawns) {
         fpv_pawn = pawns[0];
     }
     else {
-        APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
-        fpv_pawn = player_controller->GetViewTarget();
+		fpv_pawn = GetWorld()->GetFirstPlayerController()->GetPawn();
     }
 
 	// Grab player location
@@ -91,46 +97,43 @@ void ASimModeBase::BeginPlay()
     GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + GetWorld()->OriginLocation);
     // Regrab the player's position after the offset has been added (which should be 0,0,0 now)
     player_start_transform = fpv_pawn->GetActorTransform();
-    GlobalNedTransform.reset(new NedTransform(player_start_transform, 
-        UAirBlueprintLib::GetWorldToMetersScale(this)));
+    GlobalNedTransform.reset(new NedTransform(player_start_transform, UAirBlueprintLib::GetWorldToMetersScale(this)));
 
-    UAirBlueprintLib::GenerateAssetRegistryMap(this, AssetMap);
-
-    WorldSimApiRef.reset(new WorldSimApi(this));
-    ApiProviderRef.reset(new msr::airlib::ApiProvider(WorldSimApiRef.get()));
-
-    UAirBlueprintLib::setLogMessagesVisibility(GetSettings().log_messages_visible);
-
-    SetupPhysicsLoopPeriod();
-
-    SetupClockSpeed();
-
-    SetStencilIDs();
-    
-    RecordTickCount = 0;
     SetupInputBindings();
 
+	//Setup Time Of Day
     initializeTimeOfDay();
     AirSimSettings::TimeOfDaySetting tod_setting = GetSettings().tod_setting;
     SetTimeOfDay(tod_setting.enabled, tod_setting.start_datetime, tod_setting.is_start_datetime_dst,
         tod_setting.celestial_clock_speed, tod_setting.update_interval_secs, tod_setting.move_sun);
 
-    UAirBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
+	SetupPhysicsLoopPeriod();
+
+	SetupClockSpeed();
 
     SetupVehiclesAndCamera();
 
+	//Setup Recording
+	RecordTickCount = 0;
     FRecordingThread::init();
 
     if (GetSettings().recording_setting.enabled)
         StartRecording();
 
+	//Setup Weather
     UWorld* World = GetWorld();
     if (World)
     {
         UWeatherLib::initWeather(World, SpawnedActors);
     }
 	
+	//Setup Abliity for AirLib to Spawn Actors
     UAirBlueprintLib::GenerateActorMap(this, SceneObjectMap);
+	UAirBlueprintLib::GenerateAssetRegistryMap(this, AssetMap);
+
+	SetStencilIDs();
+
+	UAirBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
 }
 
 const NedTransform& ASimModeBase::GetGlobalNedTransform()
@@ -324,7 +327,7 @@ void ASimModeBase::Tick(float DeltaSeconds)
 
     ShowClockStats();
 
-    UpdateDebugReport(debug_reporter_);
+    UpdateDebugReport(debugReporter);
 
     DrawLidarDebugPoints();
 
@@ -389,7 +392,7 @@ void ASimModeBase::Reset()
 
 std::string ASimModeBase::GetDebugReport()
 {
-    return debug_reporter_.getOutput();
+    return debugReporter.getOutput();
 }
 
 void ASimModeBase::SetupInputBindings()
@@ -416,7 +419,7 @@ const msr::airlib::AirSimSettings& ASimModeBase::GetSettings() const
 void ASimModeBase::InitializeCameraDirector(const FTransform& camera_transform, float follow_distance)
 {
     TArray<AActor*> camera_dirs;
-    UAirBlueprintLib::FindAllActor<ACameraDirector>(this, camera_dirs);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraDirector::StaticClass(), camera_dirs);
     if (camera_dirs.Num() == 0) {
         //create director
         FActorSpawnParameters camera_spawn_params;
@@ -706,6 +709,7 @@ void ASimModeBase::RegisterPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBo
 
 void ASimModeBase::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
+	unused(pawns);
     //derived class should override this method to retrieve types of pawns they support
 }
 

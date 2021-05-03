@@ -27,9 +27,15 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeComputerVision::CreateApiSer
 #endif
 }
 
-void ASimModeComputerVision::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
+void ASimModeComputerVision::GetExistingVehiclePawns(TArray<APawn*>& OutPawns) const
 {
-    UAirBlueprintLib::FindAllActor<AComputerVisionPawn>(this, pawns);
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputerVisionPawn::StaticClass(), FoundActors);
+
+	for each (AActor * actor in FoundActors)
+	{
+		OutPawns.Add(static_cast<APawn*>(actor));
+	}
 }
 
 bool ASimModeComputerVision::IsVehicleTypeSupported(const std::string& vehicle_type) const

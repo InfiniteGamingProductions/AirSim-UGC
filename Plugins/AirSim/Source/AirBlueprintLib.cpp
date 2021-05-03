@@ -99,7 +99,7 @@ bool UAirBlueprintLib::spawnPlayer(UWorld* context)
     
     bool success{ false };
     TArray<AActor*> player_start_actors;
-    FindAllActor<APlayerStart>(context, player_start_actors);
+	UGameplayStatics::GetAllActorsOfClass(context, APlayerStart::StaticClass(), player_start_actors);
     if (player_start_actors.Num() > 1)
     {
         for (auto player_start : player_start_actors)

@@ -58,9 +58,10 @@ protected:
 	/**
 	* Get the vehicles that have already been spawned
 	* @param OutPawns - the vehicle pawns that were found
+	* @note This is a slow operation, use with caution
 	* @note Override Required
 	*/
-	virtual void GetExistingVehiclePawns(TArray<AActor*>& OutPawns) const;
+	virtual void GetExistingVehiclePawns(TArray<APawn*>& OutPawns) const;
 
 	/**
 	* Check if the vehicle type is supported by the simmode
@@ -318,7 +319,7 @@ protected:
 	virtual void UpdateDebugReport(msr::airlib::StateReporterWrapper& debug_reporter);
 
 private:
-	msr::airlib::StateReporterWrapper debug_reporter_;
+	msr::airlib::StateReporterWrapper debugReporter;
 
 	bool lidar_checks_done_ = false;
 	bool lidar_draw_debug_points_ = false;
