@@ -84,7 +84,7 @@ void ASimModeWorldMultiRotor::GetExistingVehiclePawns(TArray<APawn*>& pawns) con
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlyingPawn::StaticClass(), FoundActors);
 
-	for each (AActor* actor in FoundActors)
+	for (AActor* actor : FoundActors)
 	{
 		pawns.Add(static_cast<APawn*>(actor));
 	}

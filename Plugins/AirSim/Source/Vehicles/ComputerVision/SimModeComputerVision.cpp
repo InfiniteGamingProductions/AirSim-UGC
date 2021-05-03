@@ -32,7 +32,7 @@ void ASimModeComputerVision::GetExistingVehiclePawns(TArray<APawn*>& OutPawns) c
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputerVisionPawn::StaticClass(), FoundActors);
 
-	for each (AActor * actor in FoundActors)
+	for (AActor* actor : FoundActors)
 	{
 		OutPawns.Add(static_cast<APawn*>(actor));
 	}

@@ -404,7 +404,7 @@ std::unique_ptr<std::vector<std::string>> WorldSimApi::swapTextures(const std::s
 
         //Texture swap on actors that have all of those tags.
         TArray<AActor*> shuffleables;
-        UAirBlueprintLib::FindAllActor<ATextureShuffleActor>(simmode_, shuffleables);
+		UGameplayStatics::GetAllActorsOfClass(simmode_, ATextureShuffleActor::StaticClass(), shuffleables);
         for (auto *shuffler : shuffleables)
         {
             bool invalidChoice = false;

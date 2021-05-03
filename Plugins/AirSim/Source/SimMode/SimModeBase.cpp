@@ -650,44 +650,39 @@ void ASimModeBase::SetupVehiclesAndCamera()
     InitializeCameraDirector(camera_transform, camera_director_setting.follow_distance);
 
     //find all vehicle pawns
-    {
-        TArray<AActor*> pawns;
-        GetExistingVehiclePawns(pawns);
-        bool haveUEPawns = pawns.Num() > 0;
-        APawn* fpv_pawn = nullptr;
+    TArray<APawn*> pawns;
+    GetExistingVehiclePawns(pawns);
+    bool haveUEPawns = pawns.Num() > 0;
+    APawn* fpv_pawn = nullptr;
         
-        if (haveUEPawns) {
-            fpv_pawn = static_cast<APawn*>(pawns[0]);
-        } else {
-            //add vehicles from settings
-            for (const auto& vehicle_setting_pair : GetSettings().vehicles)
-            {
-                //if vehicle is of type for derived SimMode and auto creatable
-                const auto& vehicle_setting = *vehicle_setting_pair.second;
-                if (vehicle_setting.auto_create &&
-                    IsVehicleTypeSupported(vehicle_setting.vehicle_type)) {
+    if (haveUEPawns) {
+        fpv_pawn = pawns[0];
+    } else {
+        //add vehicles from settings
+        for (const auto& vehicle_setting_pair : GetSettings().vehicles)
+        {
+            //if vehicle is of type for derived SimMode and auto creatable
+            const auto& vehicle_setting = *vehicle_setting_pair.second;
+            if (vehicle_setting.auto_create && IsVehicleTypeSupported(vehicle_setting.vehicle_type)) {
 
-                    APawn* spawned_pawn = SpawnVehiclePawn(vehicle_setting);
-                    pawns.Add(spawned_pawn);
+                APawn* spawned_pawn = SpawnVehiclePawn(vehicle_setting);
+                pawns.Add(spawned_pawn);
 
-                    if (vehicle_setting.is_fpv_vehicle)
-                        fpv_pawn = spawned_pawn;
-                }
+                if (vehicle_setting.is_fpv_vehicle)
+                    fpv_pawn = spawned_pawn;
             }
         }
-        //create API objects for each pawn we have
-        for (AActor* pawn : pawns)
-        {
-            auto vehicle_pawn = static_cast<APawn*>(pawn);
+    }
+    //create API objects for each pawn we have
+    for (APawn* pawn : pawns)
+    {
+        std::unique_ptr<PawnSimApi> vehicle_sim_api = CreateVehicleApi(pawn);
+        std::string vehicle_name = vehicle_sim_api->getVehicleName();
 
-            auto vehicle_sim_api = CreateVehicleApi(vehicle_pawn);
-            std::string vehicle_name = vehicle_sim_api->getVehicleName();
+        if ((fpv_pawn == pawn || !GetApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
+            GetApiProvider()->makeDefaultVehicle(vehicle_name);
 
-            if ((fpv_pawn == vehicle_pawn || !GetApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
-                GetApiProvider()->makeDefaultVehicle(vehicle_name);
-
-            VehicleSimApis.push_back(std::move(vehicle_sim_api));
-        }
+        VehicleSimApis.push_back(std::move(vehicle_sim_api));
     }
 
     if (GetApiProvider()->hasDefaultVehicle()) {
@@ -707,9 +702,9 @@ void ASimModeBase::RegisterPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBo
     // derived class shoudl override this method to add new vehicle to the physics engine
 }
 
-void ASimModeBase::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
+void ASimModeBase::GetExistingVehiclePawns(TArray<APawn*>& OutPawns) const
 {
-	unused(pawns);
+	unused(OutPawns);
     //derived class should override this method to retrieve types of pawns they support
 }
 

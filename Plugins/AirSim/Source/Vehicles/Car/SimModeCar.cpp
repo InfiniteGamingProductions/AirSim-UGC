@@ -103,7 +103,7 @@ void ASimModeCar::GetExistingVehiclePawns(TArray<APawn*>& pawns) const
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarPawn::StaticClass(), FoundActors);
 
-	for each (AActor* actor in FoundActors)
+	for (AActor* actor : FoundActors)
 	{
 		pawns.Add(static_cast<APawn*>(actor));
 	}
