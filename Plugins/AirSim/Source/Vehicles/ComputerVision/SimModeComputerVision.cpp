@@ -70,13 +70,6 @@ std::unique_ptr<PawnSimApi> ASimModeComputerVision::CreateVehicleSimApi(
     return vehicle_sim_api;
 }
 
-msr::airlib::VehicleApiBase* ASimModeComputerVision::GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
-    const PawnSimApi* sim_api) const
-{
-    //we don't have real vehicle so no vehicle API
-    return nullptr;
-}
-
 bool ASimModeComputerVision::IsSimulationPaused() const
 {
     return UGameplayStatics::IsGamePaused(this->GetWorld());

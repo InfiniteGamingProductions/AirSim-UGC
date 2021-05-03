@@ -74,9 +74,7 @@ void ASimModeBase::BeginPlay()
     GetExistingVehiclePawns(pawns);
     bool have_existing_pawns = pawns.Num() > 0;
     AActor* fpv_pawn = nullptr;
-    // Grab player location
-    FTransform player_start_transform;
-    FVector player_loc;
+    
     if (have_existing_pawns) {
         fpv_pawn = pawns[0];
     }
@@ -84,8 +82,10 @@ void ASimModeBase::BeginPlay()
         APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
         fpv_pawn = player_controller->GetViewTarget();
     }
-    player_start_transform = fpv_pawn->GetActorTransform();
-    player_loc = player_start_transform.GetLocation();
+
+	// Grab player location
+    FTransform player_start_transform = fpv_pawn->GetActorTransform();
+    FVector player_loc = player_start_transform.GetLocation();
     // Move the world origin to the player's location (this moves the coordinate system and adds
     // a corresponding offset to all positions to compensate for the shift)
     GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + GetWorld()->OriginLocation);
@@ -118,6 +118,7 @@ void ASimModeBase::BeginPlay()
     UAirBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
 
     SetupVehiclesAndCamera();
+
     FRecordingThread::init();
 
     if (GetSettings().recording_setting.enabled)
@@ -593,9 +594,8 @@ std::unique_ptr<PawnSimApi> ASimModeBase::CreateVehicleApi(APawn* vehicle_pawn)
         CollisionDisplayParticleSystem, home_geopoint, vehicle_name);
 
     std::unique_ptr<PawnSimApi> vehicle_sim_api = CreateVehicleSimApi(pawn_sim_api_params);
-    auto vehicle_sim_api_p = vehicle_sim_api.get();
-    auto vehicle_api = GetVehicleApi(pawn_sim_api_params, vehicle_sim_api_p);
-    GetApiProvider()->insert_or_assign(vehicle_name, vehicle_api, vehicle_sim_api_p);
+	msr::airlib::VehicleApiBase* vehicle_api = vehicle_sim_api->getVehicleApiBase();
+    GetApiProvider()->insert_or_assign(vehicle_name, vehicle_api, vehicle_sim_api.get());
 
     return vehicle_sim_api;
 }
@@ -664,7 +664,7 @@ void ASimModeBase::SetupVehiclesAndCamera()
                 if (vehicle_setting.auto_create &&
                     IsVehicleTypeSupported(vehicle_setting.vehicle_type)) {
 
-                    auto spawned_pawn = SpawnVehiclePawn(vehicle_setting);
+                    APawn* spawned_pawn = SpawnVehiclePawn(vehicle_setting);
                     pawns.Add(spawned_pawn);
 
                     if (vehicle_setting.is_fpv_vehicle)
@@ -704,7 +704,6 @@ void ASimModeBase::RegisterPhysicsBody(msr::airlib::VehicleSimApiBase *physicsBo
     // derived class shoudl override this method to add new vehicle to the physics engine
 }
 
-
 void ASimModeBase::GetExistingVehiclePawns(TArray<AActor*>& pawns) const
 {
     //derived class should override this method to retrieve types of pawns they support
@@ -721,6 +720,7 @@ std::string ASimModeBase::GetVehiclePawnPath(const AirSimSettings::VehicleSettin
     //derived class should override this method to retrieve types of pawns they support
     return "";
 }
+
 PawnEvents* ASimModeBase::GetVehiclePawnEvents(APawn* pawn) const
 {
     unused(pawn);
@@ -728,6 +728,7 @@ PawnEvents* ASimModeBase::GetVehiclePawnEvents(APawn* pawn) const
     //derived class should override this method to retrieve types of pawns they support
     return nullptr;
 }
+
 const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeBase::GetVehiclePawnCameras(APawn* pawn) const
 {
     unused(pawn);
@@ -735,6 +736,7 @@ const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeBase::GetVe
     //derived class should override this method to retrieve types of pawns they support
     return common_utils::UniqueValueMap<std::string, APIPCamera*>();
 }
+
 void ASimModeBase::InitializeVehiclePawn(APawn* pawn)
 {
     unused(pawn);
@@ -748,13 +750,6 @@ std::unique_ptr<PawnSimApi> ASimModeBase::CreateVehicleSimApi(const PawnSimApi::
     sim_api->initialize();
 
     return sim_api;
-}
-
-msr::airlib::VehicleApiBase* ASimModeBase::GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
-    const PawnSimApi* sim_api) const
-{
-    //derived class should override this method to retrieve types of pawns they support
-    return nullptr;
 }
 
 // Draws debug-points on main viewport for Lidar laser hits.

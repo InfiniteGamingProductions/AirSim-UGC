@@ -47,8 +47,6 @@ protected:
     virtual void InitializeVehiclePawn(APawn* pawn) override;
     virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(
         const PawnSimApi::Params& pawn_sim_api_params) const override;
-    virtual msr::airlib::VehicleApiBase* GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
-        const PawnSimApi* sim_api) const override;
 
 private:
     std::atomic<float> current_clockspeed_;

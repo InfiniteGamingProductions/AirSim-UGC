@@ -46,11 +46,6 @@ public:
     virtual void setPose(const Pose& pose, bool ignore_collision) override;
     virtual void pawnTick(float dt) override;
 
-    msr::airlib::MultirotorApiBase* getVehicleApi() const
-    {
-        return vehicle_api_.get();
-    }
-
     virtual msr::airlib::VehicleApiBase* getVehicleApiBase() const override
     {
         return vehicle_api_.get();

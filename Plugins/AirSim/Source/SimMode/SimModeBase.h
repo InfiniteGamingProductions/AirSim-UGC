@@ -230,16 +230,6 @@ protected:
 	* @note Must Override
 	*/
 	virtual std::unique_ptr<PawnSimApi> CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const;
-
-	//TODO: Cleanup GetVehicleApi, it seems that pawn_sim_api_params is not used on any of the implementations
-	/**
-	* Gets the Vehicle Api from a PawnSimApi reference
-	* @param pawn_sim_api_params - The paramaters associated with the pawnSimApi (Not Used currently)
-	* @param sim_api - The PawnSimApi to retrive the vehicle api from
-	* @note Base implementation assumes no VehicleApi and returns nullptr
-	* @note Must Override
-	*/
-	virtual msr::airlib::VehicleApiBase* GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params, const PawnSimApi* sim_api) const;
 private:
 
 	std::unique_ptr<msr::airlib::WorldSimApiBase> WorldSimApiRef;

@@ -131,10 +131,3 @@ std::unique_ptr<PawnSimApi> ASimModeWorldMultiRotor::CreateVehicleSimApi(const P
 	
     return vehicle_sim_api;
 }
-
-msr::airlib::VehicleApiBase* ASimModeWorldMultiRotor::GetVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
-    const PawnSimApi* sim_api) const
-{
-    const MultirotorPawnSimApi* multirotor_sim_api = static_cast<const MultirotorPawnSimApi*>(sim_api);
-    return multirotor_sim_api->getVehicleApi();
-}
