@@ -148,7 +148,6 @@ void ASimHUD::CreateHUDWidget()
 			UAirBlueprintLib::LogMessage(TEXT("There were no compatible vehicles created for current SimMode! Check your settings.json."), TEXT(""), LogDebugLevel::Failure);
 		}
 
-
 		HUDWidget = CreateWidget<USimHUDWidget>(player_controller, HUDWidgetClass);
 	}
 	else {
