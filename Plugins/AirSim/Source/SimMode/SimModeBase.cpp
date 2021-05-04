@@ -75,28 +75,6 @@ void ASimModeBase::BeginPlay()
 
 	UAirBlueprintLib::setLogMessagesVisibility(GetSettings().log_messages_visible);
 
-    /*//get player start
-	//get the vehicle pawn to get this
-    TArray<APawn*> pawns;
-    GetExistingVehiclePawns(pawns);
-    bool have_existing_pawns = pawns.Num() > 0;
-    AActor* fpv_pawn = nullptr;
-    
-    if (have_existing_pawns) {
-        fpv_pawn = pawns[0];
-    }
-    else {
-		fpv_pawn = GetWorld()->GetFirstPlayerController()->GetViewTarget(); //->GetPawn();
-    }
-
-	// Grab player location
-    FTransform player_start_transform = fpv_pawn->GetActorTransform();
-	FVector player_loc = player_start_transform.GetTranslation();
-    // Move the world origin to the player's location (this moves the coordinate system and adds
-    // a corresponding offset to all positions to compensate for the shift)
-    ///GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + GetWorld()->OriginLocation);
-    // Regrab the player's position after the offset has been added (which should be 0,0,0 now)
-    player_start_transform = fpv_pawn->GetActorTransform();*/
     GlobalNedTransform.reset(new NedTransform(FTransform(), UAirBlueprintLib::GetWorldToMetersScale(this)));
 
     SetupInputBindings();
@@ -571,9 +549,9 @@ std::unique_ptr<PawnSimApi> ASimModeBase::CreateVehicleApi(APawn* vehicle_pawn)
     InitializeVehiclePawn(vehicle_pawn);
 
     //create vehicle sim api
-    const auto& ned_transform = GetGlobalNedTransform();
-    const auto& pawn_ned_pos = ned_transform.toLocalNed(vehicle_pawn->GetActorLocation());
-    const auto& home_geopoint = msr::airlib::EarthUtils::nedToGeodetic(pawn_ned_pos, GetSettings().origin_geopoint);
+    const NedTransform& ned_transform = GetGlobalNedTransform();
+    const msr::airlib::Vector3r& pawn_ned_pos = ned_transform.toLocalNed(vehicle_pawn->GetActorLocation());
+    const msr::airlib::GeoPoint& home_geopoint = msr::airlib::EarthUtils::nedToGeodetic(pawn_ned_pos, GetSettings().origin_geopoint);
     const std::string vehicle_name( TCHAR_TO_UTF8(*(vehicle_pawn->GetName())) );
 
     PawnSimApi::Params pawn_sim_api_params(vehicle_pawn, &GetGlobalNedTransform(),
@@ -602,7 +580,10 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
     AirSimSettings::singleton().addVehicleSetting(vehicle_name, vehicle_type, pose, pawn_path);
     const auto* vehicle_setting = GetSettings().getVehicleSetting(vehicle_name);
 
-    APawn* spawned_pawn = SpawnVehiclePawn(*vehicle_setting, FVector::ZeroVector, FRotator::ZeroRotator);
+    APawn* spawned_pawn = SpawnVehiclePawn(*vehicle_setting,
+		FVector(pose.position.x() * 100, pose.position.y() * 100, -pose.position.z() * 100),
+		FRotator(FQuat(pose.orientation.x(), pose.orientation.y(), pose.orientation.z(), pose.orientation.w()))
+	);
 
     std::unique_ptr<PawnSimApi> vehicle_sim_api = CreateVehicleApi(spawned_pawn);
 
@@ -616,7 +597,6 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
 
     VehicleSimApis.push_back(std::move(vehicle_sim_api));
 
-	//TODO: return if spawning vehicle was sucessfull or not
     return true;
 }
 
@@ -721,8 +701,7 @@ void ASimModeBase::InitializeVehiclePawn(APawn* pawn)
 
 std::unique_ptr<PawnSimApi> ASimModeBase::CreateVehicleSimApi(const PawnSimApi::Params& pawn_sim_api_params) const
 {
-    unused(pawn_sim_api_params);
-	std::unique_ptr<PawnSimApi> sim_api = std::unique_ptr<PawnSimApi>();
+	std::unique_ptr<PawnSimApi> sim_api = std::make_unique<PawnSimApi>(pawn_sim_api_params);
     sim_api->initialize();
 
     return sim_api;

@@ -334,7 +334,7 @@ private:
 public:
 	/** Returns a reference to the initilized SimMode from a singleton format */
 	UFUNCTION(BlueprintPure, Category = "Airsim")
-		static ASimModeBase* GetSimMode();
+	static ASimModeBase* GetSimMode();
 
 private:
 	static ASimModeBase* SIMMODE;
@@ -370,7 +370,7 @@ protected:
 	/**
 	* Converts Airsim Rotation to FRotator
 	* @param rotation - The Airsim Rotation
-	* @param default_val - A Starting frame of refrence for the conversion
+	* @param default_val - In case any numbers in Airsim Rotation are nan use this
 	* @return Returns converted FRotator
 	*/
 	FRotator ToFRotator(const AirSimSettings::Rotation& rotation, const FRotator& default_val = FRotator::ZeroRotator);
