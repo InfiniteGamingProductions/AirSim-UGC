@@ -12,6 +12,9 @@ AFlyingPawn::AFlyingPawn()
 	RootComponent = bodyMesh;
     
     pawn_events_.getActuatorSignal().connect_member(this, &AFlyingPawn::SetRotorSpeed);
+
+	vehicleSettings = CreateDefaultSubobject<UVehicleSettingsComponent>(TEXT("Vehicle Settings"));
+	vehicleSettings->SimModeType = ESimModeType::Multirotor;
 }
 
 void AFlyingPawn::BeginPlay()

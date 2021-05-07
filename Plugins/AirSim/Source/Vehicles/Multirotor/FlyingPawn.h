@@ -5,6 +5,7 @@
 #include "PIPCamera.h"
 #include "common/common_utils/UniqueValueMap.hpp"
 #include "MultirotorPawnEvents.h"
+#include "Vehicles/VehicleSettingsComponent.h"
 
 #include "FlyingPawn.generated.h"
 
@@ -56,6 +57,10 @@ private:
 	//Holds Map of camera names to camera objects (Note: Must be added in blueprints)
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TMap<FString, APIPCamera*> cameras;
+
+	//Holds the AirSim Vehicle Settings for the vehicle
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UVehicleSettingsComponent* vehicleSettings;
 
 	//Vars
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debugging", meta = (AllowPrivateAccess = "true"))

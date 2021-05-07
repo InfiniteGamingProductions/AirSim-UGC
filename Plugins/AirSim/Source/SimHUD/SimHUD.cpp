@@ -114,19 +114,16 @@ void ASimHUD::CreateSimMode()
 {
 	std::string simmode_name = AirSimSettings::singleton().simmode_name;
 
-	FActorSpawnParameters simmode_spawn_params;
-	simmode_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	FActorSpawnParameters spawnParams;
+	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	//spawn at origin. We will use this to do global NED transforms, for ex, non-vehicle objects in environment
 	if (simmode_name == AirSimSettings::kSimModeTypeMultirotor)
-		SimMode = GetWorld()->SpawnActor<ASimModeWorldMultiRotor>(FVector::ZeroVector,
-			FRotator::ZeroRotator, simmode_spawn_params);
+		SimMode = GetWorld()->SpawnActor<ASimModeWorldMultiRotor>(FVector::ZeroVector, FRotator::ZeroRotator, spawnParams);
 	else if (simmode_name == AirSimSettings::kSimModeTypeCar)
-		SimMode = GetWorld()->SpawnActor<ASimModeCar>(FVector::ZeroVector,
-			FRotator::ZeroRotator, simmode_spawn_params);
+		SimMode = GetWorld()->SpawnActor<ASimModeCar>(FVector::ZeroVector, FRotator::ZeroRotator, spawnParams);
 	else if (simmode_name == AirSimSettings::kSimModeTypeComputerVision)
-		SimMode = GetWorld()->SpawnActor<ASimModeComputerVision>(FVector::ZeroVector,
-			FRotator::ZeroRotator, simmode_spawn_params);
+		SimMode = GetWorld()->SpawnActor<ASimModeComputerVision>(FVector::ZeroVector, FRotator::ZeroRotator, spawnParams);
 	else {
 		UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("SimMode is not valid: ") + simmode_name, "Error");
 		UAirBlueprintLib::LogMessageString("SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);

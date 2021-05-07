@@ -358,6 +358,7 @@ protected:
 
 	/**
 	* Returns the AirSimSettings Object that contains settings for setup
+	* @deprecated Should call AirSimSettings::singleton() instead
 	*/
 	const msr::airlib::AirSimSettings& GetSettings() const;
 

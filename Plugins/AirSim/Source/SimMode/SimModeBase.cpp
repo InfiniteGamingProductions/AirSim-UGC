@@ -32,6 +32,8 @@
 #include "UGCBaseGameInstance.h"
 #include "UGCRegistry.h"
 
+#include "Vehicles/VehicleSettingsComponent.h"
+
 ASimModeBase *ASimModeBase::SIMMODE = nullptr;
 
 ASimModeBase* ASimModeBase::GetSimMode()
@@ -454,6 +456,7 @@ void ASimModeBase::StartApiServer()
 #endif
 
         try {
+			//How does SpawnedActors + 4 give the threadcount?
             ApiServer->start(false, SpawnedActors.Num() + 4);
         }
         catch (std::exception& ex) {
@@ -520,9 +523,9 @@ FRotator ASimModeBase::ToFRotator(const msr::airlib::AirSimSettings::Rotation& r
 APawn* ASimModeBase::SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation)
 {
 	// Get the default vehicle class
-	UClass* vehicle_bp_class = UAirBlueprintLib::LoadClass(
-		GetSettings().pawn_paths.at(GetVehiclePawnPath(vehicle_setting)).pawn_bp
-	);
+	std::string VehiclePawnPath = GetVehiclePawnPath(vehicle_setting);
+	std::string testing = AirSimSettings::singleton().pawn_paths.at(VehiclePawnPath).pawn_bp;
+	UClass* vehicle_bp_class = UAirBlueprintLib::LoadClass(testing);
 
 	//Check if main vehicle class is trying to be overridden.
 	UUGCBaseGameInstance* GameInstance = static_cast<UUGCBaseGameInstance*>(GetGameInstance());
@@ -541,11 +544,19 @@ APawn* ASimModeBase::SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehi
 	APawn* spawned_pawn = static_cast<APawn*>(GetWorld()->SpawnActor(vehicle_bp_class, &StartLocation, &StartRotation, pawn_spawn_params));
 	SpawnedActors.Add(spawned_pawn);
 
+	//Check if the spawned pawn has a vehicle settings component. If it does then do settings setup
+	UVehicleSettingsComponent* settingsComponent = static_cast<UVehicleSettingsComponent*>(spawned_pawn->GetComponentByClass(TSubclassOf<UVehicleSettingsComponent>()));
+	if (settingsComponent)
+	{
+		settingsComponent->SetAirSimVehicleSettings();
+	}
+
 	return spawned_pawn;
 }
 
 std::unique_ptr<PawnSimApi> ASimModeBase::CreateVehicleApi(APawn* vehicle_pawn)
 {
+	
     InitializeVehiclePawn(vehicle_pawn);
 
     //create vehicle sim api
@@ -578,7 +589,7 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
 
     // Retroactively adjust AirSimSettings, so it's like we knew about this vehicle all along
     AirSimSettings::singleton().addVehicleSetting(vehicle_name, vehicle_type, pose, pawn_path);
-    const auto* vehicle_setting = GetSettings().getVehicleSetting(vehicle_name);
+    const msr::airlib::AirSimSettings::VehicleSetting* vehicle_setting = GetSettings().getVehicleSetting(vehicle_name);
 
     APawn* spawned_pawn = SpawnVehiclePawn(*vehicle_setting,
 		FVector(pose.position.x() * 100, pose.position.y() * 100, -pose.position.z() * 100),
