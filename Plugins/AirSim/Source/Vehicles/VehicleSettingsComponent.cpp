@@ -19,12 +19,18 @@ void UVehicleSettingsComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	// Can Probrobly Remove this Function
 }
 
-void UVehicleSettingsComponent::SetAirSimVehicleSettings()
+bool FSensor::SetAirSimSensorSetting(AirSimSettings::SensorSetting& OutSensorSetting) 
 {
 	//TODO: This
+	return false;
+}
+
+bool UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::VehicleSetting& OutVehicleSetting)
+{
+	//TODO: This
+	return false;
 }
 

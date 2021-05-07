@@ -520,7 +520,7 @@ FRotator ASimModeBase::ToFRotator(const msr::airlib::AirSimSettings::Rotation& r
     return frotator;
 }
 
-APawn* ASimModeBase::SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation)
+APawn* ASimModeBase::SpawnVehiclePawn(AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation)
 {
 	// Get the default vehicle class
 	std::string VehiclePawnPath = GetVehiclePawnPath(vehicle_setting);
@@ -548,7 +548,7 @@ APawn* ASimModeBase::SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehi
 	UVehicleSettingsComponent* settingsComponent = static_cast<UVehicleSettingsComponent*>(spawned_pawn->GetComponentByClass(TSubclassOf<UVehicleSettingsComponent>()));
 	if (settingsComponent)
 	{
-		settingsComponent->SetAirSimVehicleSettings();
+		settingsComponent->SetAirSimVehicleSettings(vehicle_setting);
 	}
 
 	return spawned_pawn;
@@ -589,7 +589,7 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
 
     // Retroactively adjust AirSimSettings, so it's like we knew about this vehicle all along
     AirSimSettings::singleton().addVehicleSetting(vehicle_name, vehicle_type, pose, pawn_path);
-    const msr::airlib::AirSimSettings::VehicleSetting* vehicle_setting = GetSettings().getVehicleSetting(vehicle_name);
+    msr::airlib::AirSimSettings::VehicleSetting* vehicle_setting = AirSimSettings::singleton().getVehicleSetting(vehicle_name);
 
     APawn* spawned_pawn = SpawnVehiclePawn(*vehicle_setting,
 		FVector(pose.position.x() * 100, pose.position.y() * 100, -pose.position.z() * 100),
@@ -620,7 +620,7 @@ void ASimModeBase::SetupVehiclesAndCamera()
 		for (const auto& vehicle_setting_pair : GetSettings().vehicles)
 		{
 			//if vehicle is of type for derived SimMode and auto creatable
-			const auto& vehicle_setting = *vehicle_setting_pair.second;
+			msr::airlib::AirSimSettings::VehicleSetting& vehicle_setting = *vehicle_setting_pair.second;
 			if (vehicle_setting.auto_create && IsVehicleTypeSupported(vehicle_setting.vehicle_type)) {
 
 				// Get initial position

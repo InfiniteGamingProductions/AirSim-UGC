@@ -76,9 +76,6 @@ DerivedDataCache/*
 # Exclude the mods folder
 Mods/*
 
-# Exclude AirLib folder
-Plugins/AirSim/Source/AirLib/*
-
 # Releases
 Releases/*
 
@@ -87,3 +84,9 @@ Releases/*
 !Build/Scripts/Properties/*
 
 desktop.ini
+
+# Exclude AirLib except changed headers
+Plugins/AirSim/Source/AirLib/**/*.*
+Plugins/AirSim/Source/AirLib/deps/*
+!Plugins/AirSim/Source/AirLib/include/common/AirSimSettings.hpp
+

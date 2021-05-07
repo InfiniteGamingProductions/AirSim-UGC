@@ -106,7 +106,7 @@ protected:
 	* @returns A pointer to the newly spawned vehicle
 	* @note Override Optional
 	*/
-	virtual APawn* SpawnVehiclePawn(const AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation);
+	virtual APawn* SpawnVehiclePawn(AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation);
 
 	/**
 	* Spawns Vehicles from AirSim Settings and Initilizes Camera Director. Is called durring BeginPlay()
