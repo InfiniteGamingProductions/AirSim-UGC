@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,6 +6,7 @@
 #include "VehicleSettingsComponent.generated.h"
 
 typedef struct msr::airlib::AirSimSettings AirSimSettings;
+typedef msr::airlib::SensorBase::SensorType AirLibSensorType;
 
 UENUM(BlueprintType)
 enum class ESimModeType : uint8 {
@@ -35,7 +34,6 @@ enum class EDefaultVehicleState : uint8 {
 
 UENUM(BlueprintType)
 enum class ESensorType : uint8 {
-	Camera,
 	Barometer,
 	Imu,
 	Gps,
@@ -49,18 +47,32 @@ USTRUCT(BlueprintType)
 struct FSensor {
 	GENERATED_BODY()
 
+	FSensor(AirSimSettings::SensorSetting* AirLibSensorSettingRef = nullptr);
+
+	/**
+	* Called to set AirSimSensorSettings from FSensor values
+	* @param OutSensorSetting - The sensor setting that gets set by the function
+	*/
+	void SetAirSimSensorSetting(AirSimSettings::SensorSetting& OutSensorSetting);
+
+	/**
+	* Returns the AirLib Sensor Setting Refrence. Keep in mind it is nullptr by default
+	*/
+	AirSimSettings::SensorSetting* GetAirSimSensorSetting();
+
+	UPROPERTY(EditDefaultsOnly)
+	FString SensorName = TEXT("MySensor1");
+
 	UPROPERTY(EditDefaultsOnly)
 	ESensorType SensorType;
 
 	UPROPERTY(EditDefaultsOnly)
 	bool Enabled = true;
 
-	/**
-	* Called to set AirSimSensorSettings from FSensor values
-	* @param OutSensorSetting - The sensor setting that gets set by the function
-	* @return Was Sucessfull?
-	*/
-	bool SetAirSimSensorSetting(AirSimSettings::SensorSetting& OutSensorSetting);
+private:
+	AirLibSensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
+
+	AirSimSettings::SensorSetting* SensorSettingReference;
 };
 
 UCLASS()
