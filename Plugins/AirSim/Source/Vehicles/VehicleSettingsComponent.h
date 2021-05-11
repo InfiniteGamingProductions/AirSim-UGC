@@ -40,18 +40,10 @@ USTRUCT(BlueprintType)
 struct FSensor {
 	GENERATED_BODY()
 
-	FSensor();
-
 	/**
-	* Called to set AirSimSensorSettings from FSensor values
-	* @param OutSensorSetting - The sensor setting that gets set by the function
+	* Called To Create or get the AirLib Sensor Setting associated with the FSensor
 	*/
-	void SetAirSimSensorSetting(AirSimSettings::SensorSetting& OutSensorSetting);
-
-	/**
-	* Returns the AirLib Sensor Setting Refrence. Keep in mind it is nullptr by default
-	*/
-	AirSimSettings::SensorSetting* GetAirSimSensorSetting();
+	std::unique_ptr<AirSimSettings::SensorSetting> GetSensorSetting();
 
 	UPROPERTY(EditDefaultsOnly)
 	bool Enabled = true;
@@ -128,5 +120,15 @@ public:
 	TArray<FSensor> Sensors;
 
 private:
+	/**
+	* Converts Vehicle Type Enum To an std::string
+	*/
+	std::string getVehicleTypeString(EVehicleType vehicleType);
+
+	/**
+	* Converts default vehicle state Type Enum To an std::string
+	*/
+	std::string getVehicleDefaultStateString(EDefaultVehicleState vehicleState);
+
 	AirSimSettings::VehicleSetting* vehicleSettingReference;
 };

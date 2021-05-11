@@ -1260,6 +1260,7 @@ private:
         lidar_setting.rotation = createRotationSetting(settings_json, lidar_setting.rotation);
     }
 
+public:
     static std::unique_ptr<SensorSetting> createSensorSetting(
         SensorBase::SensorType sensor_type, const std::string& sensor_name,
         bool enabled)
@@ -1296,6 +1297,7 @@ private:
         return sensor_setting;
     }
 
+private:
     static void initializeSensorSetting(SensorSetting* sensor_setting, const Settings& settings_json)
     {
         sensor_setting->enabled = settings_json.getBool("Enabled", sensor_setting->enabled);

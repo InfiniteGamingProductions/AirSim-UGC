@@ -545,7 +545,7 @@ APawn* ASimModeBase::SpawnVehiclePawn(AirSimSettings::VehicleSetting* vehicle_se
 	SpawnedActors.Add(spawned_pawn);
 
 	//Check if the spawned pawn has a vehicle settings component. If it does then do settings setup
-	UVehicleSettingsComponent* settingsComponent = static_cast<UVehicleSettingsComponent*>(spawned_pawn->GetComponentByClass(TSubclassOf<UVehicleSettingsComponent>()));
+	UVehicleSettingsComponent* settingsComponent = spawned_pawn->FindComponentByClass<UVehicleSettingsComponent>();
 	if (settingsComponent)
 	{
 		settingsComponent->SetAirSimVehicleSettings(vehicle_setting);

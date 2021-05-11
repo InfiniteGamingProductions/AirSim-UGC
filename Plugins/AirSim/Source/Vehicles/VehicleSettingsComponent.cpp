@@ -1,22 +1,13 @@
 #include "Vehicles/VehicleSettingsComponent.h"
 
 #pragma region FSensor
-FSensor::FSensor()
-{
-	SensorSettingReference = nullptr;
-}
-
-void FSensor::SetAirSimSensorSetting(AirSimSettings::SensorSetting& OutSensorSetting)
-{
-	SensorSettingReference = &OutSensorSetting;
-	OutSensorSetting.sensor_type = ESensorTypeToAirLibSensorType(SensorType);
-	OutSensorSetting.enabled = Enabled;
-	OutSensorSetting.sensor_name = std::string(TCHAR_TO_UTF8(*SensorName));
-}
-
-AirSimSettings::SensorSetting* FSensor::GetAirSimSensorSetting() 
-{
-	return SensorSettingReference;
+std::unique_ptr<AirSimSettings::SensorSetting> FSensor::GetSensorSetting() {
+	//return a AirLibSensor ptr
+	return AirSimSettings::createSensorSetting(
+		ESensorTypeToAirLibSensorType(SensorType),
+		std::string(TCHAR_TO_UTF8(*SensorName)),
+		Enabled
+	);
 }
 
 AirLibSensorType FSensor::ESensorTypeToAirLibSensorType(const ESensorType InputSensorType)
@@ -55,8 +46,8 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 	//Check if we are allowed to change the settings first
 	if (OverwriteDefaultSettings)
 	{
-		VehicleSetting->vehicle_type = std::string(TCHAR_TO_UTF8(*UEnum::GetValueAsString<EVehicleType>(VehicleType)));
-		VehicleSetting->default_vehicle_state = std::string(TCHAR_TO_UTF8(*UEnum::GetValueAsString<EDefaultVehicleState>(DefaultVehicleState)));
+		VehicleSetting->vehicle_type = getVehicleTypeString(VehicleType);
+		VehicleSetting->default_vehicle_state = getVehicleDefaultStateString(DefaultVehicleState);
 
 		VehicleSetting->enable_collisions = bEnableCollisions;
 		VehicleSetting->enable_collision_passthrough = bEnableCollisionPassthrough;
@@ -77,16 +68,15 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 
 		for (FSensor sensorSettings : Sensors)
 		{
-			std::unique_ptr<AirSimSettings::SensorSetting> newSensor = std::unique_ptr<AirSimSettings::SensorSetting>(new AirSimSettings::SensorSetting());
+			//Get a AirLibSensor from the sensorSetting element
+			std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSettings.GetSensorSetting();
 
-			sensorSettings.SetAirSimSensorSetting(*newSensor);
-
-			VehicleSetting->sensors[newSensor->sensor_name] = std::move(newSensor);
+			//Add Sensor Setting to the vehicle Settings
+			VehicleSetting->sensors[AirLibSensor->sensor_name] = std::move(AirLibSensor);
 		}
-		
 
 		//We dont need to setup cameras here because they are already setup in the pawn
-		//See PawnSimApi::setupCamerasFromSettings to see more
+		//See PawnSimApi::setupCamerasFromSettings to see why
 	}
 
 	//Save the reference to the vehicle setting
@@ -96,5 +86,52 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 AirSimSettings::VehicleSetting* UVehicleSettingsComponent::GetAirSimVehicleSetting()
 {
 	return vehicleSettingReference;
+}
+
+std::string UVehicleSettingsComponent::getVehicleTypeString(EVehicleType vehicleType)
+{
+	switch (vehicleType)
+	{
+	case EVehicleType::PX4:
+		return AirSimSettings::kVehicleTypePX4;
+		break;
+	case EVehicleType::ArduCopterSolo:
+		return AirSimSettings::kVehicleTypeArduCopterSolo;
+		break;
+	case EVehicleType::ArduCopter:
+		return AirSimSettings::kVehicleTypeArduCopter;
+		break;
+	case EVehicleType::SimpleFlight:
+		return AirSimSettings::kVehicleTypeSimpleFlight;
+		break;
+	case EVehicleType::PhysXCar:
+		return AirSimSettings::kVehicleTypePhysXCar;
+		break;
+	case EVehicleType::ArduRover:
+		return AirSimSettings::kVehicleTypeArduRover;
+		break;
+	case EVehicleType::ComputerVision:
+		return AirSimSettings::kVehicleTypeComputerVision;
+		break;
+	default:
+		return AirSimSettings::kVehicleTypeComputerVision;
+		break;
+	}
+}
+
+std::string UVehicleSettingsComponent::getVehicleDefaultStateString(EDefaultVehicleState vehicleState)
+{
+	switch (vehicleState)
+	{
+	case EDefaultVehicleState::Armed:
+		return "Armed";
+		break;
+	case EDefaultVehicleState::Disarmed:
+		return "Disarmed";
+		break;
+	default:
+		return "Disarmed";
+		break;
+	}
 }
 
