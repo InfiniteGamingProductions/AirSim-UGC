@@ -520,12 +520,12 @@ FRotator ASimModeBase::ToFRotator(const msr::airlib::AirSimSettings::Rotation& r
     return frotator;
 }
 
-APawn* ASimModeBase::SpawnVehiclePawn(AirSimSettings::VehicleSetting& vehicle_setting, const FVector StartLocation, const FRotator StartRotation)
+APawn* ASimModeBase::SpawnVehiclePawn(AirSimSettings::VehicleSetting* vehicle_setting, const FVector StartLocation, const FRotator StartRotation)
 {
 	// Get the default vehicle class
-	std::string VehiclePawnPath = GetVehiclePawnPath(vehicle_setting);
-	std::string testing = AirSimSettings::singleton().pawn_paths.at(VehiclePawnPath).pawn_bp;
-	UClass* vehicle_bp_class = UAirBlueprintLib::LoadClass(testing);
+	std::string vehiclePawnPathName = GetVehiclePawnPath(*vehicle_setting);
+	std::string pawnPath = AirSimSettings::singleton().pawn_paths.at(vehiclePawnPathName).pawn_bp;
+	UClass* vehicle_bp_class = UAirBlueprintLib::LoadClass(pawnPath);
 
 	//Check if main vehicle class is trying to be overridden.
 	UUGCBaseGameInstance* GameInstance = static_cast<UUGCBaseGameInstance*>(GetGameInstance());
@@ -537,7 +537,7 @@ APawn* ASimModeBase::SpawnVehiclePawn(AirSimSettings::VehicleSetting& vehicle_se
 
 	// Setup spawn params
 	FActorSpawnParameters pawn_spawn_params;
-	pawn_spawn_params.Name = FName(vehicle_setting.vehicle_name.c_str());
+	pawn_spawn_params.Name = FName(vehicle_setting->vehicle_name.c_str());
 	pawn_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	//Spawn the new pawn
@@ -591,7 +591,7 @@ bool ASimModeBase::SpawnVehicleAtRuntime(const std::string& vehicle_name, const 
     AirSimSettings::singleton().addVehicleSetting(vehicle_name, vehicle_type, pose, pawn_path);
     msr::airlib::AirSimSettings::VehicleSetting* vehicle_setting = AirSimSettings::singleton().getVehicleSetting(vehicle_name);
 
-    APawn* spawned_pawn = SpawnVehiclePawn(*vehicle_setting,
+    APawn* spawned_pawn = SpawnVehiclePawn(vehicle_setting,
 		FVector(pose.position.x() * 100, pose.position.y() * 100, -pose.position.z() * 100),
 		FRotator(FQuat(pose.orientation.x(), pose.orientation.y(), pose.orientation.z(), pose.orientation.w()))
 	);
@@ -617,25 +617,25 @@ void ASimModeBase::SetupVehiclesAndCamera()
 	if (playerStart)
 	{
 		//Spawn Vehicles
-		for (const auto& vehicle_setting_pair : GetSettings().vehicles)
+		for (auto iter = AirSimSettings::singleton().vehicles.begin(); iter != AirSimSettings::singleton().vehicles.end(); ++iter)
 		{
 			//if vehicle is of type for derived SimMode and auto creatable
-			msr::airlib::AirSimSettings::VehicleSetting& vehicle_setting = *vehicle_setting_pair.second;
-			if (vehicle_setting.auto_create && IsVehicleTypeSupported(vehicle_setting.vehicle_type)) {
+			msr::airlib::AirSimSettings::VehicleSetting* vehicle_setting = iter->second.get();
+			if (vehicle_setting->auto_create && IsVehicleTypeSupported(vehicle_setting->vehicle_type)) {
 
 				// Get initial position
 				FVector spawnPos = playerStart->GetTransform().GetLocation();
-				if (!VectorMath::hasNan(vehicle_setting.position))
-					spawnPos = GetGlobalNedTransform().fromGlobalNed(vehicle_setting.position);
+				if (!VectorMath::hasNan(vehicle_setting->position))
+					spawnPos = GetGlobalNedTransform().fromGlobalNed(vehicle_setting->position);
 				// Get initial rotation
-				FRotator spawnRotation = ToFRotator(vehicle_setting.rotation, FRotator(playerStart->GetTransform().GetRotation()));
+				FRotator spawnRotation = ToFRotator(vehicle_setting->rotation, FRotator(playerStart->GetTransform().GetRotation()));
 
 				APawn* spawned_pawn = SpawnVehiclePawn(vehicle_setting, spawnPos, spawnRotation);
 
 				//Create Api Object for the newly spawned pawn
 				std::unique_ptr<PawnSimApi> vehicle_sim_api = CreateVehicleApi(spawned_pawn);
 
-				if ((vehicle_setting.is_fpv_vehicle || !GetApiProvider()->hasDefaultVehicle()) && vehicle_sim_api->getVehicleName() != "")
+				if ((vehicle_setting->is_fpv_vehicle || !GetApiProvider()->hasDefaultVehicle()) && vehicle_sim_api->getVehicleName() != "")
 					GetApiProvider()->makeDefaultVehicle(vehicle_sim_api->getVehicleName());
 
 				VehicleSimApis.push_back(std::move(vehicle_sim_api));

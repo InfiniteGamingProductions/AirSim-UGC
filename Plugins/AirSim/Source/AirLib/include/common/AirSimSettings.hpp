@@ -443,7 +443,7 @@ public: //methods
     // This is for the case when a new vehicle is made on the fly, at runtime
     void addVehicleSetting(const std::string& vehicle_name, const std::string& vehicle_type, const Pose& pose, const std::string& pawn_path="")
     {
-        auto vehicle_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());
+		std::unique_ptr<VehicleSetting> vehicle_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());
 
         vehicle_setting->vehicle_name = vehicle_name;
         vehicle_setting->vehicle_type = vehicle_type;

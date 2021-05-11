@@ -9,13 +9,6 @@ typedef struct msr::airlib::AirSimSettings AirSimSettings;
 typedef msr::airlib::SensorBase::SensorType AirLibSensorType;
 
 UENUM(BlueprintType)
-enum class ESimModeType : uint8 {
-	Multirotor,
-	Car,
-	ComputerVision
-};
-
-UENUM(BlueprintType)
 enum class EVehicleType : uint8 {
 	PX4,
 	ArduCopterSolo,
@@ -47,7 +40,7 @@ USTRUCT(BlueprintType)
 struct FSensor {
 	GENERATED_BODY()
 
-	FSensor(AirSimSettings::SensorSetting* AirLibSensorSettingRef = nullptr);
+	FSensor();
 
 	/**
 	* Called to set AirSimSensorSettings from FSensor values
@@ -61,13 +54,13 @@ struct FSensor {
 	AirSimSettings::SensorSetting* GetAirSimSensorSetting();
 
 	UPROPERTY(EditDefaultsOnly)
-	FString SensorName = TEXT("MySensor1");
+	bool Enabled = true;
+
+	UPROPERTY(EditDefaultsOnly)
+	FString SensorName = TEXT("MySensor");
 
 	UPROPERTY(EditDefaultsOnly)
 	ESensorType SensorType;
-
-	UPROPERTY(EditDefaultsOnly)
-	bool Enabled = true;
 
 private:
 	AirLibSensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
@@ -84,20 +77,20 @@ public:
 	// Sets default values for this component's properties
 	UVehicleSettingsComponent();
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:
 	/**
 	* Called to set AirSimVehicleSettings from component properties
 	* @param OutVehicleSetting - The vehicle setting that gets set by the function
 	* @return Was Sucessfull?
 	*/
-	bool SetAirSimVehicleSettings(AirSimSettings::VehicleSetting& OutVehicleSetting);
+	void SetAirSimVehicleSettings(AirSimSettings::VehicleSetting* VehicleSetting);
+
+	/**
+	* Returns the AirLib Vehicle Setting Refrence. Keep in mind it is nullptr by default
+	*/
+	AirSimSettings::VehicleSetting* GetAirSimVehicleSetting();
 
 	UPROPERTY(EditDefaultsOnly)
-	ESimModeType SimModeType;
+	bool OverwriteDefaultSettings = true;
 
 	UPROPERTY(EditDefaultsOnly)
 	EVehicleType VehicleType;
@@ -105,8 +98,35 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	EDefaultVehicleState DefaultVehicleState;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Collisions")
+	bool bEnableCollisions = true;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Collisions")
+	bool bEnableCollisionPassthrough = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool bEnableTrace = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool bAllowAPIAlways = true;
+
+	//Determines if the Remote Control settings should override what is set in the AirSim Settings JSON
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control")
+	bool bOverwriteRemoteControlSettings = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control")
+	int RemoteControlID = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control")
+	bool bAllowAPIWhenDisconnected = false;
+
+	//Determines if existing sensors should be removed
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
+	bool bOverwriteDefaultSensors = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
 	TArray<FSensor> Sensors;
 
-		
+private:
+	AirSimSettings::VehicleSetting* vehicleSettingReference;
 };
