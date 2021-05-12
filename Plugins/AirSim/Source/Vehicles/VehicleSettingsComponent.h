@@ -37,11 +37,11 @@ enum class ESensorType : uint8 {
 
 //Uses sensor spific settings from default sensors specified in AirSim Settings
 USTRUCT(BlueprintType)
-struct FSensor {
+struct FSensorSetting {
 	GENERATED_BODY()
 
 	/**
-	* Called To Create or get the AirLib Sensor Setting associated with the FSensor
+	* Called To Create or get the AirLib Sensor Setting associated with the FSensorSettings
 	*/
 	std::unique_ptr<AirSimSettings::SensorSetting> GetSensorSetting();
 
@@ -58,6 +58,66 @@ private:
 	AirLibSensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
 
 	AirSimSettings::SensorSetting* SensorSettingReference;
+};
+
+USTRUCT(BlueprintType)
+struct FDistanceSensorSetting : public FSensorSetting {
+	GENERATED_BODY()
+
+	//The Positon and rotation of the sensor
+	UPROPERTY(EditDefaultsOnly, Meta = (MakeEditWidget = true))
+	FTransform Transform;
+
+	//The Min Distance that the sensor can sense in meters
+	UPROPERTY(EditDefaultsOnly)
+	float MinDistance = 0.2f;
+	//The Max Distance that the sensor can sense in meters
+	UPROPERTY(EditDefaultsOnly)
+	float MaxDistance = 40.0f;
+
+	//Should DrawDebug Hit Locations
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool DrawDebugPoints = false;
+
+};
+
+USTRUCT(BlueprintType)
+struct FLidarSensorSetting : public FSensorSetting {
+	GENERATED_BODY()
+
+	//The Positon and rotation of the sensor
+	UPROPERTY(EditDefaultsOnly, Meta = (MakeEditWidget = true))
+	FTransform Transform;
+
+	UPROPERTY(EditDefaultsOnly)
+	uint32 number_of_channels = 16;
+
+	//The Max Range of the Lidar in meters
+	UPROPERTY(EditDefaultsOnly)
+	float range = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	uint32 points_per_second = 100000;
+
+	// rotations/sec
+	UPROPERTY(EditDefaultsOnly)
+	uint32 horizontal_rotation_frequency = 10;
+
+	UPROPERTY(EditDefaultsOnly, Category = "FOV")
+	float horizontal_FOV_start = 0.0f;
+	UPROPERTY(EditDefaultsOnly, Category = "FOV")
+	float horizontal_FOV_end = 359.0f;
+	//Uppermost FOV in degrees (Default for Drones = -15, Default for Car = +10)
+	UPROPERTY(EditDefaultsOnly, Category = "FOV")
+	float vertical_FOV_upper = -15.0f;
+	//Lower FOV in degrees (Default for Drones = -45, Default for Car = -10)
+	UPROPERTY(EditDefaultsOnly, Category = "FOV")
+	float vertical_FOV_lower = -45.0f;
+
+	//Should DrawDebug Hit Locations
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool DrawDebugPoints = false;
+
 };
 
 UCLASS()
@@ -112,12 +172,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Remote Control")
 	bool bAllowAPIWhenDisconnected = false;
 
-	//Determines if existing sensors should be removed
+	//Determines if existing sensors should be removed before adding sensors below
 	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
 	bool bOverwriteDefaultSensors = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
-	TArray<FSensor> Sensors;
+	TArray<FSensorSetting> Sensors;
 
 private:
 	/**

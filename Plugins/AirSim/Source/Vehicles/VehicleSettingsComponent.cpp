@@ -1,7 +1,7 @@
 #include "Vehicles/VehicleSettingsComponent.h"
 
-#pragma region FSensor
-std::unique_ptr<AirSimSettings::SensorSetting> FSensor::GetSensorSetting() {
+#pragma region FSensorSetting
+std::unique_ptr<AirSimSettings::SensorSetting> FSensorSetting::GetSensorSetting() {
 	//return a AirLibSensor ptr
 	return AirSimSettings::createSensorSetting(
 		ESensorTypeToAirLibSensorType(SensorType),
@@ -10,7 +10,7 @@ std::unique_ptr<AirSimSettings::SensorSetting> FSensor::GetSensorSetting() {
 	);
 }
 
-AirLibSensorType FSensor::ESensorTypeToAirLibSensorType(const ESensorType InputSensorType)
+AirLibSensorType FSensorSetting::ESensorTypeToAirLibSensorType(const ESensorType InputSensorType)
 {
 	switch (InputSensorType) {
 	case ESensorType::Barometer:
@@ -29,7 +29,7 @@ AirLibSensorType FSensor::ESensorTypeToAirLibSensorType(const ESensorType InputS
 
 	return AirLibSensorType::Barometer;
 }
-#pragma endregion FSensor
+#pragma endregion FSensorSetting
 
 // Sets default values for this component's properties
 UVehicleSettingsComponent::UVehicleSettingsComponent()
@@ -66,7 +66,7 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 			VehicleSetting->sensors.clear();
 		}
 
-		for (FSensor sensorSettings : Sensors)
+		for (FSensorSetting sensorSettings : Sensors)
 		{
 			//Get a AirLibSensor from the sensorSetting element
 			std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSettings.GetSensorSetting();
