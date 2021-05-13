@@ -64,6 +64,8 @@ USTRUCT(BlueprintType)
 struct FDistanceSensorSetting : public FSensorSetting {
 	GENERATED_BODY()
 
+	FDistanceSensorSetting();
+
 	//The Positon and rotation of the sensor
 	UPROPERTY(EditDefaultsOnly, Meta = (MakeEditWidget = true))
 	FTransform Transform;
@@ -79,45 +81,50 @@ struct FDistanceSensorSetting : public FSensorSetting {
 	UPROPERTY(EditDefaultsOnly, Category = "Debug")
 	bool DrawDebugPoints = false;
 
+	void SetSensorSettings(AirSimSettings::SensorSetting* Sensor);
+
 };
 
 USTRUCT(BlueprintType)
 struct FLidarSensorSetting : public FSensorSetting {
 	GENERATED_BODY()
 
+	FLidarSensorSetting();
+
 	//The Positon and rotation of the sensor
 	UPROPERTY(EditDefaultsOnly, Meta = (MakeEditWidget = true))
 	FTransform Transform;
 
 	UPROPERTY(EditDefaultsOnly)
-	uint32 number_of_channels = 16;
+	uint32 NumberOfChannels = 16;
 
 	//The Max Range of the Lidar in meters
 	UPROPERTY(EditDefaultsOnly)
-	float range = 100.0f;
+	float Range = 100.0f;
 
 	UPROPERTY(EditDefaultsOnly)
-	uint32 points_per_second = 100000;
+	uint32 PointsPerSecond = 100000;
 
 	// rotations/sec
 	UPROPERTY(EditDefaultsOnly)
-	uint32 horizontal_rotation_frequency = 10;
+	uint32 HorizontalRotationFrequency = 10;
 
 	UPROPERTY(EditDefaultsOnly, Category = "FOV")
-	float horizontal_FOV_start = 0.0f;
+	float HorizontalFOVStart = 0.0f;
 	UPROPERTY(EditDefaultsOnly, Category = "FOV")
-	float horizontal_FOV_end = 359.0f;
+	float HorizontalFOVEnd = 359.0f;
 	//Uppermost FOV in degrees (Default for Drones = -15, Default for Car = +10)
 	UPROPERTY(EditDefaultsOnly, Category = "FOV")
-	float vertical_FOV_upper = -15.0f;
+	float VerticalFOVUpper = -15.0f;
 	//Lower FOV in degrees (Default for Drones = -45, Default for Car = -10)
 	UPROPERTY(EditDefaultsOnly, Category = "FOV")
-	float vertical_FOV_lower = -45.0f;
+	float VerticalFOVLower = -45.0f;
 
 	//Should DrawDebug Hit Locations
 	UPROPERTY(EditDefaultsOnly, Category = "Debug")
 	bool DrawDebugPoints = false;
 
+	void SetSensorSettings(AirSimSettings::SensorSetting* Sensor);
 };
 
 UCLASS()
@@ -177,8 +184,13 @@ public:
 	bool bOverwriteDefaultSensors = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
-	TArray<FSensorSetting> Sensors;
+	TArray<FSensorSetting> BaseSensors;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
+	TArray<FDistanceSensorSetting> DistanceSensors;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
+	TArray<FLidarSensorSetting> LidarSensors;
 private:
 	/**
 	* Converts Vehicle Type Enum To an std::string
