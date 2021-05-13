@@ -1,13 +1,66 @@
 #include "Vehicles/VehicleSettingsComponent.h"
 
 #pragma region FSensorSetting
-std::unique_ptr<AirSimSettings::SensorSetting> FSensorSetting::GetSensorSetting() {
-	//return a AirLibSensor ptr
-	return AirSimSettings::createSensorSetting(
-		ESensorTypeToAirLibSensorType(SensorType),
-		std::string(TCHAR_TO_UTF8(*SensorName)),
-		Enabled
-	);
+std::unique_ptr<AirSimSettings::SensorSetting> FSensorSetting::CreateAirLibSensorSetting() {
+
+	//create a new sensor setting
+	std::unique_ptr<AirSimSettings::SensorSetting> airLibSensorSetting = AirSimSettings::createSensorSetting(ESensorTypeToAirLibSensorType(SensorType), std::string(TCHAR_TO_UTF8(*SensorName)), Enabled);
+
+	//Set settings spific to sensor types
+	switch (SensorType) {
+	case ESensorType::Barometer:
+		break;
+	case ESensorType::Imu:
+		break;
+	case ESensorType::Gps:
+		break;
+	case ESensorType::Magnetometer:
+		break;
+	case ESensorType::Distance_Sensor:
+	{
+		AirSimSettings::DistanceSetting* distanceSetting = static_cast<AirSimSettings::DistanceSetting*>(airLibSensorSetting.get());
+		if (distanceSetting)
+		{
+			//set location and rotation values
+			distanceSetting->position = msr::airlib::Vector3r(Position.X, Position.Y, Position.Z);
+			distanceSetting->rotation = msr::airlib::AirSimSettings::Rotation(Rotation.Yaw, Rotation.Pitch, Rotation.Roll);
+
+			distanceSetting->draw_debug_points = DrawDebugPoints;
+
+			distanceSetting->min_distance = Distance_MinDistance;
+			distanceSetting->max_distance = Distance_MaxDistance;
+		}
+
+		break;
+	}
+	case ESensorType::Lidar:
+	{
+		AirSimSettings::LidarSetting* lidarSetting = static_cast<AirSimSettings::LidarSetting*>(airLibSensorSetting.get());
+		if (lidarSetting)
+		{
+			//set location and rotation values
+			lidarSetting->position = msr::airlib::Vector3r(Position.X, Position.Y, Position.Z);
+			lidarSetting->rotation = msr::airlib::AirSimSettings::Rotation(Rotation.Yaw, Rotation.Pitch, Rotation.Roll);
+
+			lidarSetting->draw_debug_points = DrawDebugPoints;
+
+			lidarSetting->number_of_channels = Lidar_NumberOfChannels;
+			lidarSetting->range = Lidar_Range;
+			lidarSetting->points_per_second = Lidar_PointsPerSecond;
+			lidarSetting->horizontal_rotation_frequency = Lidar_HorizontalRotationFrequency;
+			lidarSetting->horizontal_FOV_start = Lidar_HorizontalFOVStart;
+			lidarSetting->horizontal_FOV_end = Lidar_HorizontalFOVEnd;
+			lidarSetting->vertical_FOV_upper = Lidar_VerticalFOVUpper;
+			lidarSetting->vertical_FOV_lower = Lidar_VerticalFOVLower;
+		}
+
+		break;
+	}
+	default:
+		break;
+	}
+
+	return airLibSensorSetting;
 }
 
 AirLibSensorType FSensorSetting::ESensorTypeToAirLibSensorType(const ESensorType InputSensorType)
@@ -31,72 +84,6 @@ AirLibSensorType FSensorSetting::ESensorTypeToAirLibSensorType(const ESensorType
 }
 #pragma endregion FSensorSetting
 
-#pragma region FDistanceSensorSetting
-FDistanceSensorSetting::FDistanceSensorSetting()
-{
-	SensorType = ESensorType::Distance_Sensor;
-}
-
-void FDistanceSensorSetting::SetSensorSettings(AirSimSettings::SensorSetting* Sensor)
-{
-	AirSimSettings::DistanceSetting* airLibSetting = static_cast<AirSimSettings::DistanceSetting*>(Sensor);
-	if (airLibSetting)
-	{
-		airLibSetting->min_distance = MinDistance;
-		airLibSetting->max_distance = MaxDistance;
-
-		//set location and rotation values
-		FVector pos = Transform.GetLocation();
-		airLibSetting->position = msr::airlib::Vector3r(pos.X, pos.Y, pos.Z);
-		FRotator rot = Transform.GetRotation().Rotator();
-		airLibSetting->rotation = msr::airlib::AirSimSettings::Rotation(rot.Yaw, rot.Pitch, rot.Roll);
-
-		airLibSetting->draw_debug_points = DrawDebugPoints;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Cannot set sensor settings for sensor that is not of type DistanceSenor"));
-	}
-}
-#pragma endregion FDistanceSensorSetting
-
-#pragma region FLidarSensorSetting
-FLidarSensorSetting::FLidarSensorSetting()
-{
-	SensorType = ESensorType::Lidar;
-}
-
-void FLidarSensorSetting::SetSensorSettings(AirSimSettings::SensorSetting* Sensor)
-{
-	AirSimSettings::LidarSetting* airLibSetting = static_cast<AirSimSettings::LidarSetting*>(Sensor);
-	if (airLibSetting)
-	{
-		//set location and rotation values
-		FVector pos = Transform.GetLocation();
-		airLibSetting->position = msr::airlib::Vector3r(pos.X, pos.Y, pos.Z);
-		FRotator rot = Transform.GetRotation().Rotator();
-		airLibSetting->rotation = msr::airlib::AirSimSettings::Rotation(rot.Yaw, rot.Pitch, rot.Roll);
-
-		//Set Sensor Settings
-		airLibSetting->number_of_channels = NumberOfChannels;
-		airLibSetting->range = Range;
-		airLibSetting->points_per_second = PointsPerSecond;
-		airLibSetting->horizontal_rotation_frequency = HorizontalRotationFrequency;
-		airLibSetting->horizontal_FOV_start = HorizontalFOVStart;
-		airLibSetting->horizontal_FOV_end = HorizontalFOVEnd;
-		airLibSetting->vertical_FOV_upper = VerticalFOVUpper;
-		airLibSetting->vertical_FOV_lower = VerticalFOVLower;
-
-		airLibSetting->draw_debug_points = DrawDebugPoints;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Cannot set sensor settings for sensor that is not of type LidarSenor"));
-	}
-
-}
-#pragma endregion FLidarSensorSetting
-
 // Sets default values for this component's properties
 UVehicleSettingsComponent::UVehicleSettingsComponent()
 {
@@ -110,7 +97,7 @@ UVehicleSettingsComponent::UVehicleSettingsComponent()
 void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::VehicleSetting* VehicleSetting)
 {
 	//Check if we are allowed to change the settings first
-	if (OverwriteDefaultSettings)
+	if (bOverwriteDefaultSettings)
 	{
 		VehicleSetting->vehicle_type = getVehicleTypeString(VehicleType);
 		VehicleSetting->default_vehicle_state = getVehicleDefaultStateString(DefaultVehicleState);
@@ -119,51 +106,32 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 		VehicleSetting->enable_collision_passthrough = bEnableCollisionPassthrough;
 		VehicleSetting->enable_trace = bEnableTrace;
 		VehicleSetting->allow_api_always = bAllowAPIAlways;
-
-		if (bOverwriteRemoteControlSettings)
-		{
-			VehicleSetting->rc.remote_control_id = RemoteControlID;
-			VehicleSetting->rc.allow_api_when_disconnected = bAllowAPIWhenDisconnected;
-		}
-
-		//setup sensors
-		if (bOverwriteDefaultSensors)
-		{
-			VehicleSetting->sensors.clear();
-		}
-
-		//TODO:: Rework this to use base sensor array for all sensors instead of having multiple arrays for each sensor type
-		//Add the base sensors
-		for (FSensorSetting sensorSetting : BaseSensors)
-		{
-			//Get a AirLibSensor from the sensorSetting element
-			std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSetting.GetSensorSetting();
-
-			//Add Sensor Setting to the vehicle Settings
-			VehicleSetting->sensors[AirLibSensor->sensor_name] = std::move(AirLibSensor);
-		}
-		//Add DistanceSensors
-		for (FDistanceSensorSetting sensorSetting : DistanceSensors)
-		{
-			std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSetting.GetSensorSetting();
-			sensorSetting.SetSensorSettings(AirLibSensor.get());
-
-			//Add Sensor Setting to the vehicle Settings
-			VehicleSetting->sensors[AirLibSensor->sensor_name] = std::move(AirLibSensor);
-		}
-		//Add LidarSensors
-		for (FLidarSensorSetting sensorSetting : LidarSensors)
-		{
-			std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSetting.GetSensorSetting();
-			sensorSetting.SetSensorSettings(AirLibSensor.get());
-
-			//Add Sensor Setting to the vehicle Settings
-			VehicleSetting->sensors[AirLibSensor->sensor_name] = std::move(AirLibSensor);
-		}
-
-		//We dont need to setup cameras here because they are already setup in the pawn
-		//See PawnSimApi::setupCamerasFromSettings to see why
 	}
+
+	if (bOverwriteRemoteControlSettings)
+	{
+		VehicleSetting->rc.remote_control_id = RemoteControlID;
+		VehicleSetting->rc.allow_api_when_disconnected = bAllowAPIWhenDisconnected;
+	}
+
+	//setup sensors
+	if (bOverwriteDefaultSensors)
+	{
+		VehicleSetting->sensors.clear();
+	}
+
+	//Add Sensors Specified
+	for (FSensorSetting sensorSetting : Sensors)
+	{
+		//Get a AirLibSensor from the sensorSetting element
+		std::unique_ptr<AirSimSettings::SensorSetting> AirLibSensor = sensorSetting.CreateAirLibSensorSetting();
+
+		//Add Sensor Setting to the vehicle Settings
+		VehicleSetting->sensors[AirLibSensor->sensor_name] = std::move(AirLibSensor);
+	}
+
+	//We dont need to setup cameras here because they are already setup in the pawn
+	//See PawnSimApi::setupCamerasFromSettings to see why
 
 	//Save the reference to the vehicle setting
 	vehicleSettingReference = VehicleSetting;
