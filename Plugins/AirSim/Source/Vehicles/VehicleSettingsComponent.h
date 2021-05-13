@@ -45,6 +45,11 @@ struct FSensorSetting {
 	*/
 	std::unique_ptr<AirSimSettings::SensorSetting> CreateAirLibSensorSetting();
 
+	/**
+	* Converts ESensorType to msr::airlib::SensorBase::SensorType
+	*/
+	AirLibSensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
+
 	UPROPERTY(EditDefaultsOnly)
 	bool Enabled = true;
 
@@ -55,17 +60,20 @@ struct FSensorSetting {
 	ESensorType SensorType;
 
 	//The Positon and rotation of the sensor
-	UPROPERTY(EditDefaultsOnly, Meta = (MakeEditWidget = true, EditCondition="SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, Meta = (EditCondition="SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
 	FVector Position;
 
 	UPROPERTY(EditDefaultsOnly, Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
 	FRotator Rotation;
 
-	//Should DrawDebug Hit Locations
+	/**
+	* Should draw hit location points?
+	* @warning - This can cause lag as it doesn't render through normal pipeline
+	*/
 	UPROPERTY(EditDefaultsOnly, Category = "Debug", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
 	bool DrawDebugPoints = false;
 
-	//Distance Sensor Settings
+	/* Distance Sensor Settings */
 	
 	//The Min Distance that the sensor can sense in meters
 	UPROPERTY(EditDefaultsOnly, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", EditConditionHides, DisplayName = "Min Distance"))
@@ -75,7 +83,7 @@ struct FSensorSetting {
 	UPROPERTY(EditDefaultsOnly, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", EditConditionHides, DisplayName = "Max Distance"))
 	float Distance_MaxDistance = 40.0f;
 
-	//Lidar Sensor Settings
+	/* Lidar Sensor Settings */
 
 	UPROPERTY(EditDefaultsOnly, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Number Of Channels"))
 	uint32 Lidar_NumberOfChannels = 16;
@@ -98,9 +106,6 @@ struct FSensorSetting {
 	//Lower FOV in degrees (Default for Drones = -45, Default for Car = -10)
 	UPROPERTY(EditDefaultsOnly, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Vertical FOV Lower"))
 	float Lidar_VerticalFOVLower = -45.0f;
-	
-private:
-	AirLibSensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
 };
 
 UCLASS()
@@ -159,18 +164,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
 	bool bOverwriteDefaultSensors = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sensors")
 	TArray<FSensorSetting> Sensors;
 private:
 	/**
 	* Converts Vehicle Type Enum To an std::string
 	*/
-	std::string getVehicleTypeString(EVehicleType vehicleType);
+	std::string getVehicleTypeAsString(EVehicleType vehicleType);
 
 	/**
 	* Converts default vehicle state Type Enum To an std::string
 	*/
-	std::string getVehicleDefaultStateString(EDefaultVehicleState vehicleState);
+	std::string getVehicleDefaultStateAsString(EDefaultVehicleState vehicleState);
 
 	AirSimSettings::VehicleSetting* vehicleSettingReference;
 };

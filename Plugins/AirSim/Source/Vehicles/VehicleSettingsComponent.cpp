@@ -99,8 +99,8 @@ void UVehicleSettingsComponent::SetAirSimVehicleSettings(AirSimSettings::Vehicle
 	//Check if we are allowed to change the settings first
 	if (bOverwriteDefaultSettings)
 	{
-		VehicleSetting->vehicle_type = getVehicleTypeString(VehicleType);
-		VehicleSetting->default_vehicle_state = getVehicleDefaultStateString(DefaultVehicleState);
+		VehicleSetting->vehicle_type = getVehicleTypeAsString(VehicleType);
+		VehicleSetting->default_vehicle_state = getVehicleDefaultStateAsString(DefaultVehicleState);
 
 		VehicleSetting->enable_collisions = bEnableCollisions;
 		VehicleSetting->enable_collision_passthrough = bEnableCollisionPassthrough;
@@ -142,7 +142,7 @@ AirSimSettings::VehicleSetting* UVehicleSettingsComponent::GetAirSimVehicleSetti
 	return vehicleSettingReference;
 }
 
-std::string UVehicleSettingsComponent::getVehicleTypeString(EVehicleType vehicleType)
+std::string UVehicleSettingsComponent::getVehicleTypeAsString(EVehicleType vehicleType)
 {
 	switch (vehicleType)
 	{
@@ -173,7 +173,7 @@ std::string UVehicleSettingsComponent::getVehicleTypeString(EVehicleType vehicle
 	}
 }
 
-std::string UVehicleSettingsComponent::getVehicleDefaultStateString(EDefaultVehicleState vehicleState)
+std::string UVehicleSettingsComponent::getVehicleDefaultStateAsString(EDefaultVehicleState vehicleState)
 {
 	switch (vehicleState)
 	{
