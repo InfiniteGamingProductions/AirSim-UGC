@@ -46,42 +46,42 @@ public:
 	*/
 	AirSimSettings::VehicleSetting* GetAirSimVehicleSetting();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly)
 	bool bOverwriteDefaultSettings = true;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	EVehicleType VehicleType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	EDefaultVehicleState DefaultVehicleState;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	bool bEnableCollisions = true;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	bool bEnableCollisionPassthrough = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	bool bEnableTrace = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "bOverwriteDefaultSettings"))
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "bOverwriteDefaultSettings"))
 	bool bAllowAPIAlways = true;
 
 	//Determines if the Remote Control settings should override what is set in the AirSim Settings JSON
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Remote Control")
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control")
 	bool bOverwriteRemoteControlSettings = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Remote Control", meta = (EditCondition = "bOverwriteRemoteControlSettings"))
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control", meta = (EditCondition = "bOverwriteRemoteControlSettings"))
 	int RemoteControlID = 0;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Remote Control", meta = (EditCondition = "bOverwriteRemoteControlSettings"))
+	UPROPERTY(EditDefaultsOnly, Category = "Remote Control", meta = (EditCondition = "bOverwriteRemoteControlSettings"))
 	bool bAllowAPIWhenDisconnected = false;
 
 	//Determines if existing sensors should be removed before adding sensors
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sensors")
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
 	bool bOverwriteDefaultSensors = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sensors")
+	UPROPERTY(EditDefaultsOnly, Category = "Sensors")
 	TArray<FSensorSetting> Sensors;
 
 private:

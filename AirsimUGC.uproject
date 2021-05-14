@@ -14,10 +14,6 @@
 			]
 		}
 	],
-	"TargetPlatforms": [
-		"MacNoEditor",
-		"WindowsNoEditor"
-	],
 	"Plugins": [
 		{
 			"Name": "AirSim",
@@ -27,5 +23,9 @@
 			"Name": "SimpleUGC",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"MacNoEditor",
+		"WindowsNoEditor"
 	]
 }
