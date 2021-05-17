@@ -18,7 +18,8 @@ enum class ESensorType : uint8 {
 
 //Uses sensor spific settings from default sensors specified in AirSim Settings
 USTRUCT(BlueprintType)
-struct FSensorSetting {
+struct AIRSIM_API FSensorSetting
+{
 	GENERATED_BODY()
 
 	/**
@@ -31,61 +32,61 @@ struct FSensorSetting {
 	*/
 	msr::airlib::SensorBase::SensorType ESensorTypeToAirLibSensorType(const ESensorType InputSensorType);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool Enabled = true;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString SensorName = TEXT("MySensor");
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESensorType SensorType;
 
 	//The Positon and rotation of the sensor
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar"))
 	FVector Position;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar"))
 	FRotator Rotation;
 
 	/**
 	* Should draw hit location points?
 	* @warning - This can cause lag as it doesn't render through normal pipeline
 	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Debug", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor || SensorType == ESensorType::Lidar"))
 	bool DrawDebugPoints = false;
 
 	/* Distance Sensor Settings */
 
 	//The Min Distance that the sensor can sense in meters
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", EditConditionHides, DisplayName = "Min Distance"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", DisplayName = "Min Distance"))
 	float Distance_MinDistance = 0.2f;
 
 	//The Max Distance that the sensor can sense in meters
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", EditConditionHides, DisplayName = "Max Distance"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance Sensor", Meta = (EditCondition = "SensorType == ESensorType::Distance_Sensor", DisplayName = "Max Distance"))
 	float Distance_MaxDistance = 40.0f;
 
 	/* Lidar Sensor Settings */
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Number Of Channels"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Number Of Channels"))
 	int32 Lidar_NumberOfChannels = 16;
 	//The Max Range of the Lidar in meters
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Range"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Range"))
 	float Lidar_Range = 100.0f;
 	//Note Must Be a positive number
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Points Per Second"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Points Per Second"))
 	int32 Lidar_PointsPerSecond = 100000;
 	// rotations/sec
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Horizontal Rotation Frequency"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Horizontal Rotation Frequency"))
 	int32 Lidar_HorizontalRotationFrequency = 10;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Horizontal FOV Start"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Horizontal FOV Start"))
 	float Lidar_HorizontalFOVStart = 0.0f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Horizontal FOV End"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Horizontal FOV End"))
 	float Lidar_HorizontalFOVEnd = 359.0f;
 	//Uppermost FOV in degrees (Default for Drones = -15, Default for Car = +10)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Vertical FOV Upper"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Vertical FOV Upper"))
 	float Lidar_VerticalFOVUpper = -15.0f;
 	//Lower FOV in degrees (Default for Drones = -45, Default for Car = -10)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", EditConditionHides, DisplayName = "Vertical FOV Lower"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lidar Sensor | FOV", Meta = (EditCondition = "SensorType == ESensorType::Lidar", DisplayName = "Vertical FOV Lower"))
 	float Lidar_VerticalFOVLower = -45.0f;
 };
