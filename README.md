@@ -1,6 +1,9 @@
 # AirSim User Generated Content
 A Unreal Engine drone and car simulator for machine learning. This project is based on [microsoft/AirSim](https://github.com/Microsoft/AirSim/) an Unreal Engine plugin that allows for drone and car simulations for machine learning. This project is an extension of the [EpicGames/UGCExample](https://github.com/EpicGames/UGCExample/) to allow for user generated content.
 
+## Getting Started
+[See The Geting Started Docs](https://github.com/InfiniteGamingProductions/AirSim-UGC/wiki/Getting-Started)
+
 ## Get It
 
 ### Windows
