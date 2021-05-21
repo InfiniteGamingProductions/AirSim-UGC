@@ -4,6 +4,12 @@ A Unreal Engine drone and car simulator for machine learning. This project is ba
 ## Getting Started
 [See The Geting Started Docs](https://github.com/InfiniteGamingProductions/AirSim-UGC/wiki/Getting-Started)
 
+To setup your development environment follow the steps [here](https://github.com/InfiniteGamingProductions/AirSim-UGC/wiki/Setup-Your-Development-Environment)
+
+Also See the [detailed documentation](https://microsoft.github.io/AirSim/) on all aspects of the AirSim plugin.
+
+Also check out the [EpicGames UGC Quickstart Guide](https://github.com/EpicGames/UGCExample/blob/release/Documentation/QuickStart.md)
+
 ## Get It
 
 ### Windows
@@ -11,14 +17,6 @@ A Unreal Engine drone and car simulator for machine learning. This project is ba
 
 ### Linux
 [Download Latest](https://github.com/InfiniteGamingProductions/AirSim-UGC/releases)
-
-## How to Use It
-
-To setup your development environment follow the steps [here](https://github.com/InfiniteGamingProductions/AirSim-UGC/wiki/Setup-Your-Development-Environment)
-
-Also See the [detailed documentation](https://microsoft.github.io/AirSim/) on all aspects of the AirSim plugin.
-
-Also check out the [EpicGames UGC Quickstart Guide](https://github.com/EpicGames/UGCExample/blob/release/Documentation/QuickStart.md)
 
 ## Code of Conduct
 
