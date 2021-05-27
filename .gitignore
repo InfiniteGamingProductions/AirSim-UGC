@@ -89,5 +89,3 @@ desktop.ini
 Plugins/AirSim/Source/AirLib/**/*.*
 Plugins/AirSim/Source/AirLib/deps/*
 !Plugins/AirSim/Source/AirLib/include/common/AirSimSettings.hpp
-
-Config/UserEditor.ini
