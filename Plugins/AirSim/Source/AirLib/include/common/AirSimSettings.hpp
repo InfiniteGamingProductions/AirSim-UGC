@@ -393,14 +393,14 @@ public: //methods
     }
 
     //returns number of warnings
-    void load(std::function<std::string(void)> simmode_getter)
+    void load()
     {
         warning_messages.clear();
         error_messages.clear();
         const Settings& settings_json = Settings::singleton();
         checkSettingsVersion(settings_json);
 
-        loadCoreSimModeSettings(settings_json, simmode_getter);
+        loadCoreSimModeSettings(settings_json);
         loadLevelSettings(settings_json);
         loadDefaultCameraSetting(settings_json, camera_defaults);
         loadCameraDirectorSetting(settings_json, camera_director, simmode_name);
@@ -429,16 +429,20 @@ public: //methods
     {
         initializeSettings("{}");
 
-        Settings& settings_json = Settings::singleton();
         //write some settings_json in new file otherwise the string "null" is written if all settings_json are empty
-        settings_json.setString("SeeDocsAt", "https://github.com/Microsoft/AirSim/blob/master/docs/settings.md");
-        settings_json.setDouble("SettingsVersion", 1.2);
+		Settings::singleton().setString("SeeDocsAt", "https://github.com/Microsoft/AirSim/blob/master/docs/settings.md");
+		Settings::singleton().setDouble("SettingsVersion", 1.2);
 
-        std::string settings_filename = Settings::getUserDirectoryFullPath("settings.json");
-        //TODO: there is a crash in Linux due to settings_json.saveJSonString(). Remove this workaround after we only support Unreal 4.17
-        //https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
-        settings_json.saveJSonFile(settings_filename);
+		saveSettingsToJsonFile();
     }
+
+	static void saveSettingsToJsonFile()
+	{
+		std::string settings_filename = Settings::getUserDirectoryFullPath("settings.json");
+		//TODO: there is a crash in Linux due to settings_json.saveJSonString(). Remove this workaround after we only support Unreal 4.17
+		//https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
+		Settings::singleton().saveJSonFile(settings_filename);
+	}
 
     // This is for the case when a new vehicle is made on the fly, at runtime
     void addVehicleSetting(const std::string& vehicle_name, const std::string& vehicle_type, const Pose& pose, const std::string& pawn_path="")
@@ -536,15 +540,13 @@ private:
         return has_default;
     }
 
-    void loadCoreSimModeSettings(const Settings& settings_json, std::function<std::string(void)> simmode_getter)
+    void loadCoreSimModeSettings(const Settings& settings_json)
     {
         //get the simmode from user if not specified
         simmode_name = settings_json.getString("SimMode", "");
         if (simmode_name == "") {
-            if (simmode_getter)
-                simmode_name = simmode_getter();
-            else
-                throw std::invalid_argument("simmode_name is not expected empty in SimModeBase");
+			Settings::singleton().setString("SimMode", kSimModeTypeMultirotor);
+			simmode_name = kSimModeTypeMultirotor;
         }
 
         physics_engine_name = settings_json.getString("PhysicsEngineName", "");

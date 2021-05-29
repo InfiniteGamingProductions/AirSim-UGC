@@ -30,7 +30,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/** Resets the SimMode */
-    UFUNCTION(BlueprintCallable, Category = "Airsim")
+    UFUNCTION(BlueprintCallable, Category = "AirSim")
     virtual void Reset();
 
 protected:
@@ -168,7 +168,7 @@ public:
 	* Toggles frame recording
 	* @return returns if recording is enabled or not
 	*/
-    UFUNCTION(BlueprintCallable, Category = "Airsim")
+    UFUNCTION(BlueprintCallable, Category = "AirSim")
     bool ToggleRecording();
 
 	/** Tells Recording Thread to Start Recording */
@@ -333,7 +333,7 @@ private:
 #pragma region Singleton
 public:
 	/** Returns a reference to the initilized SimMode from a singleton format */
-	UFUNCTION(BlueprintPure, Category = "Airsim")
+	UFUNCTION(BlueprintPure, Category = "AirSim")
 	static ASimModeBase* GetSimMode();
 
 private:

@@ -28,7 +28,7 @@
 #include "AssetRegistryModule.h"
 
 /*
-//TODO: change naming conventions to same as other files?
+//TODO: change naming conventions to same as UE4 Coding Standard?
 Naming conventions in this file:
 Methods -> CamelCase
 parameters -> camel_case
@@ -39,6 +39,100 @@ bool UAirBlueprintLib::log_messages_hidden_ = false;
 msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType UAirBlueprintLib::mesh_naming_method_ =
     msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName;
 IImageWrapperModule* UAirBlueprintLib::image_wrapper_module_ = nullptr;
+
+void UAirBlueprintLib::InitilizeAirSimSettings()
+{
+	std::string settingsText;
+	if (GetSettingsText(settingsText))
+		msr::airlib::AirSimSettings::initializeSettings(settingsText);
+	else
+		msr::airlib::AirSimSettings::createDefaultSettingsFile();
+
+	msr::airlib::AirSimSettings::singleton().load();
+	for (const auto& warning : msr::airlib::AirSimSettings::singleton().warning_messages) {
+		LogMessageString(warning, "", LogDebugLevel::Failure);
+	}
+	for (const auto& error : msr::airlib::AirSimSettings::singleton().error_messages) {
+		ShowMessage(EAppMsgType::Ok, error, "settings.json");
+	}
+}
+
+void UAirBlueprintLib::SetAirSimMode(FString SimModeName)
+{
+	msr::airlib::Settings::singleton().setString("SimMode", std::string(TCHAR_TO_UTF8(*SimModeName)));
+}
+
+FString UAirBlueprintLib::GetAirSimMode()
+{
+	return FString(UTF8_TO_TCHAR(msr::airlib::Settings::singleton().getString("SimMode", "Empty").c_str()));
+}
+
+void UAirBlueprintLib::SaveAirSimSettingsToJson()
+{
+	msr::airlib::AirSimSettings::saveSettingsToJsonFile();
+}
+
+// Attempts to parse the settings text from one of multiple locations.
+// First, check the command line for settings provided via "-s" or "--settings" arguments
+// Next, check the executable's working directory for the settings file.
+// Finally, check the user's documents folder. 
+// If the settings file cannot be read, throw an exception
+bool UAirBlueprintLib::GetSettingsText(std::string& OutSettingsText)
+{
+	return (GetSettingsTextFromCommandLine(OutSettingsText)
+		||
+		ReadSettingsTextFromFile(FString(msr::airlib::Settings::getExecutableFullPath("settings.json").c_str()), OutSettingsText)
+		||
+		ReadSettingsTextFromFile(FString(msr::airlib::Settings::Settings::getUserDirectoryFullPath("settings.json").c_str()), OutSettingsText));
+}
+
+// Attempts to parse the settings file path or the settings text from the command line
+// Looks for the flag "--settings". If it exists, settingsText will be set to the value.
+// Example (Path): AirSim.exe --settings "C:\path\to\settings.json"
+// Example (Text): AirSim.exe -s '{"foo" : "bar"}' -> settingsText will be set to {"foo": "bar"}
+// Returns true if the argument is present, false otherwise.
+bool UAirBlueprintLib::GetSettingsTextFromCommandLine(std::string& OutSettingsText)
+{
+	bool found = false;
+	FString settingsTextFString;
+	const TCHAR* commandLineArgs = FCommandLine::Get();
+
+	if (FParse::Param(commandLineArgs, TEXT("-settings"))) {
+		FString commandLineArgsFString = FString(commandLineArgs);
+		int idx = commandLineArgsFString.Find(TEXT("-settings"));
+		FString settingsJsonFString = commandLineArgsFString.RightChop(idx + 10);
+
+		if (ReadSettingsTextFromFile(settingsJsonFString.TrimQuotes(), OutSettingsText)) {
+			return true;
+		}
+
+		if (FParse::QuotedString(*settingsJsonFString, settingsTextFString)) {
+			OutSettingsText = std::string(TCHAR_TO_UTF8(*settingsTextFString));
+			found = true;
+		}
+	}
+
+	return found;
+}
+
+bool UAirBlueprintLib::ReadSettingsTextFromFile(FString settingsFilepath, std::string& OutSettingsText)
+{
+	bool found = FPaths::FileExists(settingsFilepath);
+	if (found) {
+		FString settingsTextFStr;
+		bool readSuccessful = FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
+		if (readSuccessful) {
+			LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
+			OutSettingsText = TCHAR_TO_UTF8(*settingsTextFStr);
+		}
+		else {
+			LogMessageString("Cannot read file ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Failure);
+			throw std::runtime_error("Cannot read settings file.");
+		}
+	}
+
+	return found;
+}
 
 void UAirBlueprintLib::LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec)
 {
@@ -304,6 +398,8 @@ float UAirBlueprintLib::GetWorldToMetersScale(const AActor* context)
     }
     return w2m;
 }
+
+
 
 template<typename T>
 T* UAirBlueprintLib::GetActorComponent(AActor* actor, FString name)

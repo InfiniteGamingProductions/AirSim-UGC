@@ -25,7 +25,7 @@ void ASimHUD::BeginPlay()
     Super::BeginPlay();
 
     try {
-        InitializeAirSimSettings();
+		UAirBlueprintLib::InitilizeAirSimSettings();
 
         SetUnrealEngineSettings();
 
@@ -73,23 +73,6 @@ void ASimHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 }
 
 // Begin Play Setup Functions
-
-void ASimHUD::InitializeAirSimSettings()
-{
-	std::string settingsText;
-	if (GetSettingsText(settingsText))
-		AirSimSettings::initializeSettings(settingsText);
-	else
-		AirSimSettings::createDefaultSettingsFile();
-
-	AirSimSettings::singleton().load(std::bind(&ASimHUD::GetSimModeFromUser, this));
-	for (const auto& warning : AirSimSettings::singleton().warning_messages) {
-		UAirBlueprintLib::LogMessageString(warning, "", LogDebugLevel::Failure);
-	}
-	for (const auto& error : AirSimSettings::singleton().error_messages) {
-		UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, error, "settings.json");
-	}
-}
 
 void ASimHUD::SetUnrealEngineSettings()
 {
@@ -280,12 +263,10 @@ void ASimHUD::OnPause()
 	}
 }
 
-
 void ASimHUD::ToggleRecordHandler()
 {
 	SimMode->ToggleRecording();
 }
-
 
 void ASimHUD::UpdateWidgetSubwindowVisibility()
 {
@@ -308,18 +289,6 @@ void ASimHUD::UpdateWidgetSubwindowVisibility()
 std::vector<ASimHUD::AirSimSettings::SubwindowSetting>& ASimHUD::GetSubWindowSettings()
 {
     return AirSimSettings::singleton().subwindow_settings;
-}
-
-std::string ASimHUD::GetSimModeFromUser()
-{
-    if (EAppReturnType::No == UAirBlueprintLib::ShowMessage(EAppMsgType::YesNo,
-        "Would you like to use car simulation? Choose no to use quadrotor simulation.",
-        "Choose Vehicle"))
-    {
-        return AirSimSettings::kSimModeTypeMultirotor;
-    }
-    else
-        return AirSimSettings::kSimModeTypeCar;
 }
 
 void ASimHUD::PauseSimulation()
@@ -352,68 +321,4 @@ void ASimHUD::UnpauseSimulation()
 		//UGameplayStatics::SetGamePaused(this, false);
 		SimMode->PauseSimulation(false);
 	}
-}
-
-// Attempts to parse the settings text from one of multiple locations.
-// First, check the command line for settings provided via "-s" or "--settings" arguments
-// Next, check the executable's working directory for the settings file.
-// Finally, check the user's documents folder. 
-// If the settings file cannot be read, throw an exception
-bool ASimHUD::GetSettingsText(std::string& OutSettingsText) 
-{
-    return (GetSettingsTextFromCommandLine(OutSettingsText)
-        ||
-        ReadSettingsTextFromFile(FString(msr::airlib::Settings::getExecutableFullPath("settings.json").c_str()), OutSettingsText)
-        ||
-        ReadSettingsTextFromFile(FString(msr::airlib::Settings::Settings::getUserDirectoryFullPath("settings.json").c_str()), OutSettingsText));
-}
-
-// Attempts to parse the settings file path or the settings text from the command line
-// Looks for the flag "--settings". If it exists, settingsText will be set to the value.
-// Example (Path): AirSim.exe --settings "C:\path\to\settings.json"
-// Example (Text): AirSim.exe -s '{"foo" : "bar"}' -> settingsText will be set to {"foo": "bar"}
-// Returns true if the argument is present, false otherwise.
-bool ASimHUD::GetSettingsTextFromCommandLine(std::string& OutSettingsText) 
-{
-
-    bool found = false;
-    FString settingsTextFString;
-    const TCHAR* commandLineArgs = FCommandLine::Get();
-
-    if (FParse::Param(commandLineArgs, TEXT("-settings"))) {
-        FString commandLineArgsFString = FString(commandLineArgs);
-        int idx = commandLineArgsFString.Find(TEXT("-settings"));
-        FString settingsJsonFString = commandLineArgsFString.RightChop(idx + 10);
-
-        if (ReadSettingsTextFromFile(settingsJsonFString.TrimQuotes(), OutSettingsText)) {
-            return true;
-        }
-
-        if (FParse::QuotedString(*settingsJsonFString, settingsTextFString)) {
-			OutSettingsText = std::string(TCHAR_TO_UTF8(*settingsTextFString));
-            found = true;
-        }
-    }
-
-    return found;
-}
-
-bool ASimHUD::ReadSettingsTextFromFile(FString settingsFilepath, std::string& OutSettingsText)
-{
-
-    bool found = FPaths::FileExists(settingsFilepath);
-    if (found) {
-        FString settingsTextFStr;
-        bool readSuccessful = FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
-        if (readSuccessful) {
-            UAirBlueprintLib::LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
-			OutSettingsText = TCHAR_TO_UTF8(*settingsTextFStr);
-        }
-        else {
-            UAirBlueprintLib::LogMessageString("Cannot read file ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Failure);
-            throw std::runtime_error("Cannot read settings file.");
-        }
-    }
-
-    return found;
 }

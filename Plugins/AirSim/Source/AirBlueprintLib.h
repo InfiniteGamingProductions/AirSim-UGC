@@ -45,6 +45,22 @@ class UAirBlueprintLib : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 
 public:
+	//AirSim Settings Functions
+	UFUNCTION(BlueprintCallable, Category = "AirSim|Settings")
+	static void InitilizeAirSimSettings();
+	UFUNCTION(BlueprintCallable, category = "AirSim|Settings")
+	static void SetAirSimMode(FString SimModeName);
+	UFUNCTION(BlueprintCallable, category = "AirSim|Settings")
+	static FString GetAirSimMode();
+	UFUNCTION(BlueprintCallable, Category = "AirSim|Settings")
+	static void SaveAirSimSettingsToJson();
+
+private:
+	static bool GetSettingsText(std::string& OutSettingsText);
+	static bool GetSettingsTextFromCommandLine(std::string& OutSettingsText);
+	static bool ReadSettingsTextFromFile(FString fileName, std::string& OutSettingsText);
+
+public:
     static void OnEndPlay();
     static void LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec = 60);
     UFUNCTION(BlueprintCallable, Category = "Utils")

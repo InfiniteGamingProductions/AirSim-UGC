@@ -48,7 +48,6 @@ public:
 
 private:
 	//Begin Play Setup Functions
-	void InitializeAirSimSettings();
 	void SetUnrealEngineSettings();
 	void CreateSimMode();
 	void CreateHUDWidget();
@@ -59,12 +58,6 @@ private:
 
 	void UpdateWidgetSubwindowVisibility();
     std::vector<AirSimSettings::SubwindowSetting>& GetSubWindowSettings();
-
-    std::string GetSimModeFromUser();
-
-	bool GetSettingsText(std::string& OutSettingsText);
-	bool GetSettingsTextFromCommandLine(std::string& OutSettingsText);
-	bool ReadSettingsTextFromFile(FString fileName, std::string& OutSettingsText);
 
     UPROPERTY() USimHUDWidget* HUDWidget;
     UPROPERTY() ASimModeBase* SimMode;
